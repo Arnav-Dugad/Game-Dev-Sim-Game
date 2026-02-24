@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="theme-color" content="#050508">
+  <title>Development | GameForge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    .project-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 18px;
+      margin-bottom: 12px;
+      transition: all var(--t-base);
+    }
+    .project-card:hover { border-color: var(--border-bright); }
+    .project-card.selected { border-color: var(--violet); box-shadow: 0 0 20px rgba(108,99,255,0.15); }
+
+    .quality-bars { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .q-row { display: flex; flex-direction: column; gap: 4px; }
+    .q-label { font-size: 0.75rem; color: var(--text-3); display: flex; justify-content: space-between; }
+
+    .focus-slider { display: flex; flex-direction: column; gap: 6px; }
+    .focus-row { display: flex; align-items: center; gap: 10px; }
+    .focus-name { width: 80px; font-size: 0.8125rem; color: var(--text-2); flex-shrink: 0; }
+    .focus-pct { width: 36px; text-align: right; font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-3); }
+
+    .staff-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--bg-4);
+      border: 1px solid var(--border);
+      border-radius: var(--r-full);
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all var(--t-fast);
+    }
+    .staff-chip:hover { border-color: var(--danger); }
+    .staff-chip-avail {
+      border-color: var(--border);
+      cursor: pointer;
+      background: var(--bg-3);
+    }
+    .staff-chip-avail:hover { border-color: var(--success); background: var(--success-dim); }
+
+    .detail-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 20px;
+    }
+
+    .game-history-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .game-history-item:last-child { border-bottom: none; }
+
+    /* Modal styles */
+    .platform-check { display: flex; flex-wrap: wrap; gap: 8px; }
+    .platform-toggle {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 14px;
+      background: var(--bg-3);
+      border: 2px solid var(--border);
+      border-radius: var(--r-md);
+      cursor: pointer;
+      transition: all var(--t-fast);
+      font-size: 0.875rem;
+    }
+    .platform-toggle.on { border-color: var(--violet); background: var(--violet-dim); color: var(--violet-light); }
+    .platform-toggle.locked { opacity: 0.4; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <div id="page-loader" class="full-page-loader">
+    <div style="font-size:2rem">🔨</div>
+    <div class="spinner spinner-lg"></div>
+  </div>
+
+  <!-- Top Nav -->
+  <nav class="top-nav">
+    <a href="dashboard.html" class="nav-logo" style="color:inherit;text-decoration:none">
+      <div class="nav-logo-icon">🎮</div>
+      <span id="nav-company-name">GameForge</span>
+    </a>
+    <div class="time-display" style="margin:0 auto">
+      <button class="speed-btn" data-speed="0">⏸</button>
+      <button class="speed-btn active" data-speed="1">▶</button>
+      <button class="speed-btn" data-speed="2">⏩</button>
+      <button class="speed-btn" data-speed="4">⏭</button>
+      <span id="nav-time">Jan Y2005 W1</span>
+    </div>
+    <div class="cash-display">💰 <span id="nav-cash">$0</span></div>
+  </nav>
+  <div class="top-nav-spacer"></div>
+
+  <main class="app-content">
+
+    <!-- Header -->
+    <div class="section-header" style="margin-bottom:16px">
+      <div>
+        <h2 class="section-title">🔨 Development Studio</h2>
+        <div class="section-subtitle" id="dev-subtitle">Manage your game projects</div>
+      </div>
+      <button class="btn btn-primary" onclick="GF.ui.showModal('new-project-modal')">+ New Game</button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs" style="margin-bottom:16px" id="dev-tabs">
+      <button class="tab-btn active" data-tab="active" onclick="switchTab('active',this)">Active Projects</button>
+      <button class="tab-btn" data-tab="released" onclick="switchTab('released',this)">Released Games</button>
+    </div>
+
+    <!-- Active Projects Tab -->
+    <div id="tab-active">
+      <div id="active-projects-list"></div>
+    </div>
+
+    <!-- Released Games Tab -->
+    <div id="tab-released" style="display:none">
+      <div id="released-games-list"></div>
+    </div>
+
+  </main>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <a href="dashboard.html"   class="nav-item"><span class="nav-item-icon">🏠</span>HQ</a>
+    <a href="development.html" class="nav-item active"><span class="nav-item-icon">🔨</span>Dev</a>
+    <a href="team.html"        class="nav-item"><span class="nav-item-icon">👥</span>Team</a>
+    <a href="market.html"      class="nav-item"><span class="nav-item-icon">📈</span>Market</a>
+    <a href="finances.html"    class="nav-item"><span class="nav-item-icon">💰</span>Finance</a>
+    <a href="settings.html"    class="nav-item"><span class="nav-item-icon">⚙️</span>More<span class="nav-badge" id="notif-badge" style="display:none">0</span></a>
+  </nav>
+
+  <!-- NEW PROJECT MODAL -->
+  <div class="modal-overlay" id="new-project-modal">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title">🎮 New Game Project</h3>
+        <button class="modal-close" onclick="GF.ui.closeModal('new-project-modal')">✕</button>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="form-group">
+          <label class="form-label">Game Title</label>
+          <input class="input" id="np-title" placeholder='e.g. "Dark Horizon"' maxlength="50">
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group">
+            <label class="form-label">Genre</label>
+            <select class="input" id="np-genre"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Budget</label>
+            <div class="input-group">
+              <span class="input-icon">$</span>
+              <input class="input" type="number" id="np-budget" value="100000" min="10000" step="10000">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Target Platforms</label>
+          <div class="platform-check" id="np-platforms"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Development Focus</label>
+          <div class="focus-slider" id="np-focus">
+            <div class="focus-row"><span class="focus-name">🎨 Graphics</span><input type="range" class="range-input" id="f-graphics" min="0" max="100" value="25" oninput="updateFocus()"><span class="focus-pct" id="f-graphics-val">25%</span></div>
+            <div class="focus-row"><span class="focus-name">⚙️ Gameplay</span><input type="range" class="range-input" id="f-gameplay" min="0" max="100" value="25" oninput="updateFocus()"><span class="focus-pct" id="f-gameplay-val">25%</span></div>
+            <div class="focus-row"><span class="focus-name">📖 Story</span><input type="range" class="range-input" id="f-story"    min="0" max="100" value="25" oninput="updateFocus()"><span class="focus-pct" id="f-story-val">25%</span></div>
+            <div class="focus-row"><span class="focus-name">🎵 Sound</span><input type="range" class="range-input" id="f-sound"    min="0" max="100" value="25" oninput="updateFocus()"><span class="focus-pct" id="f-sound-val">25%</span></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Assign Staff</label>
+          <div id="np-staff-list" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        </div>
+
+        <div style="background:var(--bg-3);border-radius:var(--r-md);padding:12px;font-size:0.875rem">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <span style="color:var(--text-3)">Estimated Duration</span>
+            <span id="np-est-weeks" style="font-family:var(--font-mono);font-weight:600" class="text-cyan">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span style="color:var(--text-3)">Available Cash</span>
+            <span id="np-avail-cash" style="font-family:var(--font-mono);font-weight:600" class="text-success">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="GF.ui.closeModal('new-project-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="createProject()">🚀 Start Project</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROJECT DETAIL MODAL -->
+  <div class="modal-overlay" id="project-detail-modal">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title" id="detail-title">Project Detail</h3>
+        <button class="modal-close" onclick="GF.ui.closeModal('project-detail-modal')">✕</button>
+      </div>
+      <div id="detail-content"></div>
+    </div>
+  </div>
+
+  <div id="confirm-overlay">
+    <div id="confirm-box">
+      <h3 id="confirm-title" style="font-family:var(--font-display);font-size:1.125rem;margin-bottom:8px"></h3>
+      <p id="confirm-message" style="color:var(--text-3);font-size:0.875rem;margin-bottom:20px"></p>
+      <div style="display:flex;gap:10px">
+        <button id="confirm-cancel" class="btn btn-secondary flex-1">Cancel</button>
+        <button id="confirm-ok"     class="btn btn-primary flex-1">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <!-- Firebase + Game JS -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/companies.js"></script>
+  <script src="js/market.js"></script>
+  <script src="js/research.js"></script>
+  <script src="js/team.js"></script>
+  <script src="js/finances.js"></script>
+  <script src="js/development.js"></script>
+  <script src="js/publishing.js"></script>
+  <script src="js/awards.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/export-import.js"></script>
+  <script src="js/ui.js"></script>
+
+  <script>
+    let activeTab = 'active';
+    let selectedStaff = new Set();
+    let selectedPlatforms = new Set(['pc']);
+
+    (async () => {
+      await GF.auth.requireAuth();
+      try { await GF.db.load('autosave'); } catch(e) { window.location.href='setup.html'; return; }
+      GF.companies.init();
+      GF.team.refreshApplicants();
+      GF.notifications.init();
+      GF.ui.init();
+      GF.engine.start();
+      GF.db.startAutoSave(60000);
+      buildNewProjectModal();
+      renderAll();
+      GF.ui.hideLoader();
+      setInterval(renderAll, 3000);
+    })();
+
+    function switchTab(tab, el) {
+      activeTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('tab-active').style.display   = tab === 'active'   ? '' : 'none';
+      document.getElementById('tab-released').style.display = tab === 'released' ? '' : 'none';
+      renderAll();
+    }
+
+    function renderAll() {
+      if (!GF.state.isLoaded()) return;
+      const s = GF.state.get();
+      document.getElementById('nav-company-name').textContent = s.company.name;
+      document.getElementById('dev-subtitle').textContent = `${s.projects.length} active · ${s.releasedGames.length} released`;
+      if (activeTab === 'active') renderActiveProjects(s);
+      else renderReleasedGames(s);
+    }
+
+    function renderActiveProjects(s) {
+      const list = document.getElementById('active-projects-list');
+      if (!s.projects.length) {
+        list.innerHTML = `<div class="empty-state">
+          <div class="empty-state-icon">🔨</div>
+          <div class="empty-state-title">No Active Projects</div>
+          <div class="empty-state-text">Start a new game project to begin development.</div>
+          <button class="btn btn-primary" style="margin-top:16px" onclick="GF.ui.showModal('new-project-modal')">+ New Game Project</button>
+        </div>`;
+        return;
+      }
+      list.innerHTML = s.projects.map(p => buildProjectCard(p, s)).join('');
+    }
+
+    function buildProjectCard(p, s) {
+      const phaseIdx = GF.PHASES.indexOf(p.phase);
+      const phaseColors = ['var(--text-3)', 'var(--cyan)', 'var(--warning)', 'var(--violet)'];
+      const phaseColor  = phaseColors[phaseIdx] || 'var(--text-3)';
+
+      const teamMembers = s.staff.filter(st => p.assignedStaff.includes(st.id));
+      const avgMorale   = teamMembers.length ? Math.round(teamMembers.reduce((a,b)=>a+b.morale,0)/teamMembers.length) : 0;
+
+      return `
+        <div class="project-card" onclick="openDetail('${p.id}')">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px">
+            <div>
+              <div style="font-family:var(--font-display);font-weight:700;font-size:1.0625rem;margin-bottom:4px">${p.title}</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                ${GF.ui.genreBadge(p.genre)}
+                <span class="badge badge-muted">${p.platforms.map(pl=>GF.PLATFORMS[pl]?.icon||pl).join(' ')}</span>
+                ${p.crunchMode ? '<span class="badge badge-danger">🔥 Crunch</span>' : ''}
+              </div>
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <div style="font-family:var(--font-mono);font-size:1.25rem;font-weight:700;color:var(--cyan)">${p.totalProgress}%</div>
+              <div style="font-size:0.75rem;color:${phaseColor}">${GF.PHASE_LABELS[p.phase] || p.phase}</div>
+            </div>
+          </div>
+
+          <!-- Total progress -->
+          <div class="progress-bar-wrap xl" style="margin-bottom:10px">
+            <div class="progress-bar-fill" style="width:${p.totalProgress}%"></div>
+          </div>
+
+          <!-- Phase steps -->
+          <div class="phase-steps" style="margin-bottom:12px">
+            ${GF.PHASES.map(ph => `
+              <div class="phase-step ${ph === p.phase ? 'active' : GF.PHASES.indexOf(ph) < phaseIdx ? 'done' : ''}">
+                <div class="phase-dot">${GF.PHASES.indexOf(ph) < phaseIdx ? '✓' : (GF.PHASES.indexOf(ph)+1)}</div>
+                <div class="phase-label">${GF.PHASE_LABELS[ph].split(' ')[0]}</div>
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- Quality bars -->
+          <div class="quality-bars" style="margin-bottom:12px">
+            <div class="q-row"><div class="q-label"><span>🎨 Graphics</span><span>${Math.round(p.quality.graphics)}%</span></div><div class="progress-bar-wrap sm"><div class="progress-bar-fill" style="width:${p.quality.graphics}%"></div></div></div>
+            <div class="q-row"><div class="q-label"><span>⚙️ Gameplay</span><span>${Math.round(p.quality.gameplay)}%</span></div><div class="progress-bar-wrap sm"><div class="progress-bar-fill" style="width:${p.quality.gameplay}%"></div></div></div>
+            <div class="q-row"><div class="q-label"><span>📖 Story</span><span>${Math.round(p.quality.story)}%</span></div><div class="progress-bar-wrap sm"><div class="progress-bar-fill" style="width:${p.quality.story}%"></div></div></div>
+            <div class="q-row"><div class="q-label"><span>🎵 Sound</span><span>${Math.round(p.quality.sound)}%</span></div><div class="progress-bar-wrap sm"><div class="progress-bar-fill" style="width:${p.quality.sound}%"></div></div></div>
+          </div>
+
+          <!-- Footer -->
+          <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--text-3);flex-wrap:wrap;gap:8px">
+            <span>👥 ${p.assignedStaff.length} staff · Morale ${avgMorale}%</span>
+            <span>💰 Spent $${GF.ui.formatNum(p.spent, true)} / $${GF.ui.formatNum(p.budget, true)}</span>
+            <span>🐛 ${p.bugs} bugs · Hype ${Math.round(p.hype)}%</span>
+          </div>
+        </div>`;
+    }
+
+    function renderReleasedGames(s) {
+      const list = document.getElementById('released-games-list');
+      if (!s.releasedGames.length) {
+        list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🎮</div><div class="empty-state-title">No Released Games</div><div class="empty-state-text">Complete a development project to see your games here.</div></div>`;
+        return;
+      }
+      list.innerHTML = [...s.releasedGames].reverse().map(g => `
+        <div class="card card-hover" style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px">
+            <div>
+              <div style="font-family:var(--font-display);font-weight:700;font-size:1rem;margin-bottom:4px">${g.title}</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                ${GF.ui.genreBadge(g.genre)}
+                <span class="badge badge-muted">${g.platforms.map(p=>GF.PLATFORMS[p]?.label||p).join(', ')}</span>
+                ${g.awards.map(a => `<span class="badge badge-gold">🏆 ${GF.AWARD_CATEGORIES.find(c=>c.id===a)?.label||a}</span>`).join('')}
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-family:var(--font-mono);font-size:1.5rem;font-weight:700;color:${GF.ui.scoreColor(g.reviewScore)}">${g.reviewScore}</div>
+              <div style="font-size:0.75rem;color:var(--text-3)">Y${g.releaseDate.year} W${g.releaseDate.week}</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:10px;background:var(--bg-3);border-radius:var(--r-md);font-size:0.8125rem">
+            <div><div style="color:var(--text-3);font-size:0.7rem;margin-bottom:2px">TOTAL SALES</div><div style="font-family:var(--font-mono);font-weight:600">${GF.ui.formatNum(g.totalSales, true)}</div></div>
+            <div><div style="color:var(--text-3);font-size:0.7rem;margin-bottom:2px">TOTAL REVENUE</div><div style="font-family:var(--font-mono);font-weight:600;color:var(--success)">$${GF.ui.formatNum(g.totalRevenue, true)}</div></div>
+            <div><div style="color:var(--text-3);font-size:0.7rem;margin-bottom:2px">MONTHLY</div><div style="font-family:var(--font-mono);font-weight:600">${GF.ui.formatNum(g.currentMonthlySales, true)}/mo</div></div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openDetail(projectId) {
+      const s = GF.state.get();
+      const p = s.projects.find(proj => proj.id === projectId);
+      if (!p) return;
+
+      document.getElementById('detail-title').textContent = p.title;
+      const teamMembers = s.staff.filter(st => p.assignedStaff.includes(st.id));
+      const available   = GF.team.getAvailableStaff();
+
+      document.getElementById('detail-content').innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <!-- Status -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div style="padding:10px;background:var(--bg-3);border-radius:var(--r-md)">
+              <div style="font-size:0.7rem;color:var(--text-3);margin-bottom:2px">PHASE</div>
+              <div style="font-weight:600;font-size:0.9rem">${GF.PHASE_LABELS[p.phase]}</div>
+              <div class="progress-bar-wrap sm" style="margin-top:6px"><div class="progress-bar-fill" style="width:${p.phaseProgress}%"></div></div>
+            </div>
+            <div style="padding:10px;background:var(--bg-3);border-radius:var(--r-md)">
+              <div style="font-size:0.7rem;color:var(--text-3);margin-bottom:2px">OVERALL</div>
+              <div style="font-family:var(--font-mono);font-weight:700;font-size:1.2rem;color:var(--cyan)">${p.totalProgress}%</div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-sm ${p.crunchMode ? 'btn-danger' : 'btn-secondary'}" onclick="toggleCrunch('${p.id}')">
+              ${p.crunchMode ? '🔥 Disable Crunch' : '⚡ Enable Crunch'}
+            </button>
+            <button class="btn btn-sm btn-secondary" onclick="openMarketingModal('${p.id}')">📣 Set Marketing</button>
+          </div>
+
+          <!-- Assigned Staff -->
+          <div>
+            <div class="form-label" style="margin-bottom:8px">Assigned Staff (${teamMembers.length})</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              ${teamMembers.map(st => `
+                <div class="staff-chip" onclick="removeStaff('${p.id}','${st.id}')" title="Click to remove">
+                  ${GF.STAFF_ROLES[st.role]?.icon||'👤'} ${st.name} (Skill ${st.skill})
+                  <span style="color:var(--danger)">✕</span>
+                </div>
+              `).join('') || '<span style="color:var(--text-3);font-size:0.8rem">No staff assigned</span>'}
+            </div>
+          </div>
+
+          <!-- Available Staff -->
+          ${available.length ? `
+          <div>
+            <div class="form-label" style="margin-bottom:8px">Add Staff</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              ${available.map(st => `
+                <div class="staff-chip staff-chip-avail" onclick="addStaff('${p.id}','${st.id}')" title="Click to assign">
+                  ${GF.STAFF_ROLES[st.role]?.icon||'👤'} ${st.name} (${st.skill})
+                </div>
+              `).join('')}
+            </div>
+          </div>` : ''}
+
+          <!-- Marketing budget -->
+          <div style="background:var(--bg-3);border-radius:var(--r-md);padding:12px">
+            <div style="display:flex;justify-content:space-between;font-size:0.875rem">
+              <span style="color:var(--text-3)">Marketing Budget</span>
+              <span style="font-family:var(--font-mono);font-weight:600;color:var(--violet-light)">$${GF.ui.formatNum(p.marketingBudget)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:0.875rem;margin-top:6px">
+              <span style="color:var(--text-3)">Hype Level</span>
+              <span style="font-family:var(--font-mono);font-weight:600;color:var(--cyan)">${Math.round(p.hype)}%</span>
+            </div>
+          </div>
+        </div>`;
+
+      GF.ui.showModal('project-detail-modal');
+    }
+
+    function toggleCrunch(projId) {
+      GF.development.toggleCrunch(projId);
+      GF.ui.closeModal('project-detail-modal');
+      renderAll();
+    }
+
+    function addStaff(projId, staffId) {
+      GF.development.addStaffToProject(projId, staffId);
+      openDetail(projId);
+      renderAll();
+    }
+
+    function removeStaff(projId, staffId) {
+      GF.development.removeStaffFromProject(projId, staffId);
+      openDetail(projId);
+      renderAll();
+    }
+
+    function openMarketingModal(projId) {
+      const budget = prompt('Enter additional marketing budget ($):');
+      const amount = parseInt(budget);
+      if (!isNaN(amount) && amount > 0) {
+        GF.development.setMarketing(projId, amount);
+        openDetail(projId);
+      }
+    }
+
+    // ── New Project Modal ──────────────────────────────────
+    function buildNewProjectModal() {
+      const s = GF.state.get();
+
+      // Genre dropdown
+      const gSel = document.getElementById('np-genre');
+      gSel.innerHTML = Object.entries(GF.GENRES).map(([id, g]) =>
+        `<option value="${id}">${g.icon} ${g.label}</option>`
+      ).join('');
+
+      // Platform checkboxes
+      const platforms = document.getElementById('np-platforms');
+      const licensed  = GF.publishing.getLicensedPlatforms();
+      platforms.innerHTML = Object.entries(GF.PLATFORMS).map(([id, p]) => {
+        const isLicensed = licensed.includes(id);
+        const isOn = selectedPlatforms.has(id);
+        return `<div class="platform-toggle ${isOn ? 'on' : ''} ${!isLicensed ? 'locked' : ''}"
+          onclick="${isLicensed ? `togglePlatform('${id}', this)` : ''}"
+          title="${!isLicensed ? 'Get a platform license first' : p.label}">
+          ${p.icon} ${p.label}
+          ${!isLicensed ? '🔒' : ''}
+        </div>`;
+      }).join('');
+
+      // Staff
+      renderModalStaff();
+      updateEstimate();
+    }
+
+    function renderModalStaff() {
+      const s = GF.state.get();
+      const avail = GF.team.getAvailableStaff();
+      document.getElementById('np-staff-list').innerHTML = avail.length
+        ? avail.map(st => `
+            <div class="staff-chip staff-chip-avail ${selectedStaff.has(st.id) ? 'on' : ''}" style="${selectedStaff.has(st.id) ? 'border-color:var(--success);background:var(--success-dim)' : ''}"
+                 onclick="toggleStaff('${st.id}', this)">
+              ${GF.STAFF_ROLES[st.role]?.icon||'👤'} ${st.name} (${st.skill})
+            </div>
+          `).join('')
+        : '<span style="color:var(--text-3);font-size:0.8rem">No available staff — hire from Team page first</span>';
+    }
+
+    function togglePlatform(id, el) {
+      if (selectedPlatforms.has(id)) { selectedPlatforms.delete(id); el.classList.remove('on'); }
+      else { selectedPlatforms.add(id); el.classList.add('on'); }
+      updateEstimate();
+    }
+
+    function toggleStaff(id, el) {
+      if (selectedStaff.has(id)) { selectedStaff.delete(id); el.style.borderColor=''; el.style.background=''; }
+      else { selectedStaff.add(id); el.style.borderColor='var(--success)'; el.style.background='var(--success-dim)'; }
+      updateEstimate();
+    }
+
+    function updateFocus() {
+      ['graphics','gameplay','story','sound'].forEach(f => {
+        document.getElementById(`f-${f}-val`).textContent = document.getElementById(`f-${f}`).value + '%';
+      });
+      updateEstimate();
+    }
+
+    function updateEstimate() {
+      const budget = parseInt(document.getElementById('np-budget')?.value) || 100000;
+      const s = GF.state.get();
+      const teamIds = [...selectedStaff];
+      const team = s.staff.filter(st => teamIds.includes(st.id));
+      const avgSkill = team.length ? team.reduce((a,b)=>a+b.skill,0)/team.length : 3;
+      const base = 26;
+      const skillFactor = 10 / avgSkill;
+      const est = Math.round(base * Math.sqrt(budget/200000) * skillFactor * 0.7);
+      document.getElementById('np-est-weeks').textContent = est + ' weeks';
+      document.getElementById('np-avail-cash').textContent = GF.ui.formatCash(s.finances.cash);
+    }
+
+    function createProject() {
+      const title = document.getElementById('np-title').value.trim();
+      if (!title) { GF.notifications.push('warning','Title Required','Give your game a name.'); return; }
+
+      const budget = parseInt(document.getElementById('np-budget').value);
+      const genre  = document.getElementById('np-genre').value;
+
+      const focus = {
+        graphics: parseInt(document.getElementById('f-graphics').value),
+        gameplay: parseInt(document.getElementById('f-gameplay').value),
+        story:    parseInt(document.getElementById('f-story').value),
+        sound:    parseInt(document.getElementById('f-sound').value)
+      };
+
+      const proj = GF.development.createProject({
+        title,
+        genre,
+        platforms: [...selectedPlatforms],
+        budget,
+        staffIds: [...selectedStaff],
+        focus
+      });
+
+      if (proj) {
+        GF.ui.closeModal('new-project-modal');
+        selectedStaff.clear();
+        switchTab('active', document.querySelector('.tab-btn'));
+        renderAll();
+      }
+    }
+  </script>
+</body>
+</html>

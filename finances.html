@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="theme-color" content="#050508">
+  <title>Finances | GameForge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    .finance-stat {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 14px 16px;
+      transition: all var(--t-base);
+    }
+    .finance-stat:hover { border-color: var(--border-bright); }
+
+    /* History bars */
+    .history-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      height: 80px;
+      padding-bottom: 4px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .history-chart::-webkit-scrollbar { display: none; }
+    .chart-bar-group { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 20px; flex-shrink: 0; }
+    .chart-bar {
+      width: 100%;
+      min-width: 8px;
+      border-radius: 2px 2px 0 0;
+      transition: height 0.6s ease;
+    }
+    .chart-bar.revenue { background: var(--success); opacity: 0.8; }
+    .chart-bar.expense { background: var(--danger); opacity: 0.6; }
+    .chart-label { font-size: 0.55rem; color: var(--text-4); }
+
+    /* Loan card */
+    .loan-card {
+      background: var(--bg-3);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+
+    /* Game revenue list */
+    .revenue-game {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .revenue-game:last-child { border-bottom: none; }
+
+    /* Investor offer */
+    .investor-card {
+      background: var(--bg-3);
+      border: 2px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 16px;
+      margin-bottom: 10px;
+      transition: all var(--t-base);
+    }
+    .investor-card:hover { border-color: var(--gold); }
+  </style>
+</head>
+<body>
+  <div id="page-loader" class="full-page-loader">
+    <div style="font-size:2rem">💰</div>
+    <div class="spinner spinner-lg"></div>
+  </div>
+
+  <nav class="top-nav">
+    <a href="dashboard.html" class="nav-logo" style="color:inherit;text-decoration:none">
+      <div class="nav-logo-icon">🎮</div>
+      <span id="nav-company-name">GameForge</span>
+    </a>
+    <div class="time-display" style="margin:0 auto">
+      <button class="speed-btn" data-speed="0">⏸</button>
+      <button class="speed-btn active" data-speed="1">▶</button>
+      <button class="speed-btn" data-speed="2">⏩</button>
+      <button class="speed-btn" data-speed="4">⏭</button>
+      <span id="nav-time">Jan Y2005 W1</span>
+    </div>
+    <div class="cash-display">💰 <span id="nav-cash">$0</span></div>
+  </nav>
+  <div class="top-nav-spacer"></div>
+
+  <main class="app-content">
+    <div class="section-header" style="margin-bottom:16px">
+      <div>
+        <h2 class="section-title">💰 Financial Center</h2>
+        <div class="section-subtitle" id="fin-subtitle">Balance sheet & investments</div>
+      </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px">
+      <div class="stat-card">
+        <div class="stat-label">CASH</div>
+        <div class="stat-value" id="fc-cash">$0</div>
+        <div class="stat-change" id="fc-cash-sub" style="color:var(--text-3)">Balance</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">MONTHLY NET</div>
+        <div class="stat-value" id="fc-net">$0</div>
+        <div class="stat-change" id="fc-runway" style="color:var(--text-3)">runway</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">TOTAL REVENUE</div>
+        <div class="stat-value" id="fc-total-rev">$0</div>
+        <div style="font-size:0.75rem;color:var(--text-3);margin-top:4px" id="fc-monthly-rev">Monthly: $0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">TOTAL EXPENSES</div>
+        <div class="stat-value" id="fc-total-exp">$0</div>
+        <div style="font-size:0.75rem;color:var(--text-3);margin-top:4px" id="fc-monthly-exp">Monthly: $0</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs" style="margin-bottom:16px">
+      <button class="tab-btn active" onclick="switchTab('overview', this)">Overview</button>
+      <button class="tab-btn" onclick="switchTab('loans', this)">Loans</button>
+      <button class="tab-btn" onclick="switchTab('invest', this)">Investments</button>
+      <button class="tab-btn" onclick="switchTab('games', this)">Game Revenue</button>
+    </div>
+
+    <!-- Overview -->
+    <div id="tab-overview">
+      <!-- Revenue vs Expense chart -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header">
+          <div class="card-title">Revenue vs Expenses</div>
+          <div style="display:flex;gap:12px;font-size:0.75rem">
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:var(--success);display:inline-block"></span>Revenue</span>
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:var(--danger);display:inline-block"></span>Expenses</span>
+          </div>
+        </div>
+        <div class="history-chart" id="rev-chart">
+          <div style="color:var(--text-4);font-size:0.8rem;align-self:center;width:100%;text-align:center">No financial history yet</div>
+        </div>
+      </div>
+
+      <!-- Expense breakdown -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header"><div class="card-title">Monthly Expense Breakdown</div></div>
+        <div id="expense-breakdown"></div>
+      </div>
+
+      <!-- Stock -->
+      <div class="card" id="stock-card" style="margin-bottom:16px;display:none">
+        <div class="card-header">
+          <div class="card-title">📈 Stock Price</div>
+          <span class="badge badge-gold">PUBLIC</span>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:2.5rem;font-weight:700;color:var(--gold)" id="stock-price">$0.00</div>
+        <div style="font-size:0.875rem;color:var(--text-3);margin-top:4px">Market Cap: <span id="market-cap" class="text-gold">$0</span></div>
+      </div>
+
+      <!-- IPO / Go Public -->
+      <div class="card" id="ipo-card" style="margin-bottom:16px">
+        <div class="card-header"><div class="card-title">🚀 Go Public (IPO)</div></div>
+        <p style="font-size:0.875rem;color:var(--text-3);margin-bottom:12px">Take your studio public to raise massive capital. Requires 500+ reputation.</p>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <div style="flex:1">
+            <div style="font-size:0.75rem;color:var(--text-3);margin-bottom:4px">Your Reputation</div>
+            <div class="progress-bar-wrap"><div class="progress-bar-fill" id="ipo-rep-bar" style="width:0%"></div></div>
+          </div>
+          <div style="font-family:var(--font-mono);font-weight:700;font-size:1rem" id="ipo-rep-val">0 / 500</div>
+        </div>
+        <button class="btn btn-gold btn-w-full" id="ipo-btn" onclick="doIPO()" disabled>Go Public</button>
+      </div>
+    </div>
+
+    <!-- Loans -->
+    <div id="tab-loans" style="display:none">
+      <div style="margin-bottom:16px">
+        <div class="section-header" style="margin-bottom:12px">
+          <div class="section-title">Active Loans</div>
+          <button class="btn btn-primary btn-sm" onclick="GF.ui.showModal('loan-modal')">+ Take Loan</button>
+        </div>
+        <div id="loans-list">
+          <div class="empty-state"><div class="empty-state-icon">🏦</div><div class="empty-state-title">No Active Loans</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Investments -->
+    <div id="tab-invest" style="display:none">
+      <div class="section-header" style="margin-bottom:12px">
+        <div class="section-title">Investor Offers</div>
+        <span class="badge badge-muted" id="equity-total">0% sold</span>
+      </div>
+      <div id="vc-offers-list"></div>
+      <div style="margin-top:20px">
+        <div class="section-title" style="margin-bottom:12px">Active Investments</div>
+        <div id="active-investments"></div>
+      </div>
+    </div>
+
+    <!-- Game Revenue -->
+    <div id="tab-games" style="display:none">
+      <div id="game-revenue-list">
+        <div class="empty-state"><div class="empty-state-icon">🎮</div><div class="empty-state-title">No Released Games</div></div>
+      </div>
+    </div>
+
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="dashboard.html"   class="nav-item"><span class="nav-item-icon">🏠</span>HQ</a>
+    <a href="development.html" class="nav-item"><span class="nav-item-icon">🔨</span>Dev</a>
+    <a href="team.html"        class="nav-item"><span class="nav-item-icon">👥</span>Team</a>
+    <a href="market.html"      class="nav-item"><span class="nav-item-icon">📈</span>Market</a>
+    <a href="finances.html"    class="nav-item active"><span class="nav-item-icon">💰</span>Finance</a>
+    <a href="settings.html"    class="nav-item"><span class="nav-item-icon">⚙️</span>More<span class="nav-badge" id="notif-badge" style="display:none">0</span></a>
+  </nav>
+
+  <!-- Loan Modal -->
+  <div class="modal-overlay" id="loan-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">🏦 Take a Business Loan</h3>
+        <button class="modal-close" onclick="GF.ui.closeModal('loan-modal')">✕</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="form-group">
+          <label class="form-label">Loan Amount</label>
+          <div class="input-group"><span class="input-icon">$</span><input class="input" type="number" id="loan-amount" value="500000" min="50000" step="50000" oninput="updateLoanCalc()"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="form-group">
+            <label class="form-label">Interest Rate (%)</label>
+            <select class="input" id="loan-rate" onchange="updateLoanCalc()">
+              <option value="5">5% — Good credit</option>
+              <option value="10" selected>10% — Standard</option>
+              <option value="18">18% — High risk</option>
+              <option value="25">25% — Emergency</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Term (months)</label>
+            <select class="input" id="loan-term" onchange="updateLoanCalc()">
+              <option value="12">12 months</option>
+              <option value="24" selected>24 months</option>
+              <option value="36">36 months</option>
+              <option value="60">60 months</option>
+            </select>
+          </div>
+        </div>
+        <div style="background:var(--bg-3);border-radius:var(--r-md);padding:14px">
+          <div class="info-row"><span class="info-row-label">Monthly Payment</span><span class="info-row-value font-mono" id="loan-monthly" style="color:var(--danger)">—</span></div>
+          <div class="info-row"><span class="info-row-label">Total Repayment</span><span class="info-row-value font-mono" id="loan-total">—</span></div>
+          <div class="info-row"><span class="info-row-label">Max Available</span><span class="info-row-value font-mono text-success" id="loan-max">—</span></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="GF.ui.closeModal('loan-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="doTakeLoan()">Confirm Loan</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="confirm-overlay"><div id="confirm-box">
+    <h3 id="confirm-title" style="font-family:var(--font-display);font-size:1.125rem;margin-bottom:8px"></h3>
+    <p id="confirm-message" style="color:var(--text-3);font-size:0.875rem;margin-bottom:20px"></p>
+    <div style="display:flex;gap:10px"><button id="confirm-cancel" class="btn btn-secondary flex-1">Cancel</button><button id="confirm-ok" class="btn btn-primary flex-1">Confirm</button></div>
+  </div></div>
+  <div id="toast-container"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/companies.js"></script>
+  <script src="js/market.js"></script>
+  <script src="js/research.js"></script>
+  <script src="js/team.js"></script>
+  <script src="js/finances.js"></script>
+  <script src="js/development.js"></script>
+  <script src="js/publishing.js"></script>
+  <script src="js/awards.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/export-import.js"></script>
+  <script src="js/ui.js"></script>
+
+  <script>
+    let activeTab = 'overview';
+
+    (async () => {
+      await GF.auth.requireAuth();
+      try { await GF.db.load('autosave'); } catch(e) { window.location.href='setup.html'; return; }
+      GF.companies.init();
+      GF.team.refreshApplicants();
+      GF.notifications.init();
+      GF.ui.init();
+      GF.engine.start();
+      GF.db.startAutoSave(60000);
+      renderAll();
+      updateLoanCalc();
+      GF.ui.hideLoader();
+      setInterval(renderAll, 3000);
+    })();
+
+    function switchTab(tab, el) {
+      activeTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      ['overview','loans','invest','games'].forEach(t =>
+        document.getElementById(`tab-${t}`).style.display = t === tab ? '' : 'none'
+      );
+      renderAll();
+    }
+
+    function renderAll() {
+      if (!GF.state.isLoaded()) return;
+      const s = GF.state.get();
+      const f = s.finances;
+
+      document.getElementById('nav-company-name').textContent = s.company.name;
+
+      // Key metrics
+      document.getElementById('fc-cash').textContent = GF.ui.formatCash(f.cash);
+      document.getElementById('fc-cash').style.color = f.cash < 0 ? 'var(--danger)' : f.cash < 50000 ? 'var(--warning)' : '';
+      document.getElementById('fc-cash-sub').textContent = f.cash < 0 ? '⚠️ NEGATIVE' : 'Available';
+      const net = f.monthlyRevenue - f.monthlyExpenses;
+      document.getElementById('fc-net').textContent = GF.ui.formatCash(net);
+      document.getElementById('fc-net').style.color = net >= 0 ? 'var(--success)' : 'var(--danger)';
+      const runway = f.monthlyExpenses > 0 ? Math.floor(f.cash / f.monthlyExpenses) : 999;
+      document.getElementById('fc-runway').textContent = `${runway} months runway`;
+      document.getElementById('fc-runway').style.color = runway < 3 ? 'var(--danger)' : runway < 6 ? 'var(--warning)' : 'var(--text-3)';
+      document.getElementById('fc-total-rev').textContent = GF.ui.formatCash(f.totalRevenue);
+      document.getElementById('fc-monthly-rev').textContent = 'Monthly: ' + GF.ui.formatCash(f.monthlyRevenue);
+      document.getElementById('fc-total-exp').textContent = GF.ui.formatCash(f.totalExpenses);
+      document.getElementById('fc-monthly-exp').textContent = 'Monthly: ' + GF.ui.formatCash(f.monthlyExpenses);
+
+      // Fin subtitle
+      document.getElementById('fin-subtitle').textContent = `Year ${s.time.year} · Month ${s.time.month}`;
+
+      if (activeTab === 'overview') renderOverview(s, f);
+      else if (activeTab === 'loans') renderLoans(f);
+      else if (activeTab === 'invest') renderInvestments(s, f);
+      else if (activeTab === 'games') renderGameRevenue(s);
+    }
+
+    function renderOverview(s, f) {
+      // Chart
+      const chart = document.getElementById('rev-chart');
+      if (f.history.length) {
+        const maxVal = Math.max(...f.history.map(h => Math.max(h.revenue, h.expenses, 1)));
+        chart.innerHTML = f.history.map(h => {
+          const rh = Math.round((h.revenue / maxVal) * 72);
+          const eh = Math.round((h.expenses / maxVal) * 72);
+          return `<div class="chart-bar-group">
+            <div class="chart-bar revenue" style="height:${rh}px"></div>
+            <div class="chart-bar expense" style="height:${eh}px"></div>
+            <div class="chart-label">M${h.month}</div>
+          </div>`;
+        }).join('');
+      }
+
+      // Expense breakdown
+      const salaries = s.staff.reduce((a,b)=>a+b.salary,0);
+      const rent     = s.company.officeRent;
+      const engine   = GF.ENGINES[s.company.engineType]?.monthlyCost || 0;
+      const loans    = f.loans.reduce((a,b)=>a+b.monthlyPayment,0);
+      const total    = salaries + rent + engine + loans;
+      const rows = [
+        { label:'👥 Staff Salaries', val: salaries },
+        { label:'🏢 Office Rent',    val: rent },
+        { label:'⚙️ Engine License', val: engine },
+        { label:'🏦 Loan Payments',  val: loans }
+      ].filter(r => r.val > 0);
+
+      document.getElementById('expense-breakdown').innerHTML = rows.map(r => `
+        <div class="info-row">
+          <span class="info-row-label">${r.label}</span>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:80px;background:var(--bg-4);border-radius:3px;height:4px;overflow:hidden">
+              <div style="height:100%;width:${total>0?Math.round(r.val/total*100):0}%;background:var(--danger);border-radius:3px"></div>
+            </div>
+            <span class="info-row-value text-danger">-${GF.ui.formatCash(r.val)}</span>
+          </div>
+        </div>
+      `).join('') || '<div style="color:var(--text-3);font-size:0.875rem;padding:10px 0">No expenses yet</div>';
+
+      // Stock / IPO
+      const rep = s.company.reputation;
+      if (f.isPublic) {
+        document.getElementById('stock-card').style.display = '';
+        document.getElementById('ipo-card').style.display   = 'none';
+        document.getElementById('stock-price').textContent  = '$' + (f.stockPrice || 0).toFixed(2);
+        document.getElementById('market-cap').textContent   = '$' + GF.ui.formatNum(f.marketCap, true);
+      } else {
+        document.getElementById('stock-card').style.display = 'none';
+        document.getElementById('ipo-card').style.display   = '';
+        document.getElementById('ipo-rep-bar').style.width  = Math.min(100, rep/5) + '%';
+        document.getElementById('ipo-rep-val').textContent  = `${rep} / 500`;
+        const ipoBtn = document.getElementById('ipo-btn');
+        ipoBtn.disabled = rep < 500;
+        ipoBtn.title    = rep < 500 ? `Need ${500 - rep} more reputation` : 'Ready to IPO!';
+      }
+    }
+
+    function renderLoans(f) {
+      const list = document.getElementById('loans-list');
+      if (!f.loans.length) {
+        list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🏦</div><div class="empty-state-title">No Active Loans</div><div class="empty-state-text">Take a loan to fund your projects.</div></div>`;
+        return;
+      }
+      list.innerHTML = f.loans.map(l => `
+        <div class="loan-card">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <div style="font-family:var(--font-display);font-weight:600">$${GF.ui.formatNum(l.amount)} Loan</div>
+            <span class="badge badge-warning">${l.interestRate}% p.a.</span>
+          </div>
+          <div class="progress-bar-wrap sm" style="margin-bottom:8px">
+            <div class="progress-bar-fill danger" style="width:${Math.round((l.remaining/l.amount)*100)}%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.8125rem;color:var(--text-3)">
+            <span>Remaining: <strong style="color:var(--danger)">$${GF.ui.formatNum(l.remaining)}</strong></span>
+            <span>$${GF.ui.formatNum(l.monthlyPayment)}/mo</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderInvestments(s, f) {
+      const offers = GF.finances.checkVCOffers();
+      const totalEquity = f.investments.reduce((a,b) => a + b.equityPct, 0);
+      document.getElementById('equity-total').textContent = totalEquity + '% equity sold';
+
+      document.getElementById('vc-offers-list').innerHTML = offers.length
+        ? offers.map(o => `
+            <div class="investor-card">
+              <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
+                <div>
+                  <div style="font-family:var(--font-display);font-weight:700;font-size:1rem">${o.investor}</div>
+                  <div style="font-size:0.8rem;color:var(--text-3);margin-top:2px">Offering $${GF.ui.formatNum(o.amount)} for ${o.equityPct}% equity</div>
+                </div>
+                <span class="badge badge-gold">Available</span>
+              </div>
+              <div style="display:flex;gap:8px">
+                <div style="flex:1;background:var(--bg-4);border-radius:var(--r-sm);padding:8px;text-align:center">
+                  <div style="font-size:0.7rem;color:var(--text-3)">FUNDING</div>
+                  <div style="font-family:var(--font-mono);font-weight:700;color:var(--success)">$${GF.ui.formatNum(o.amount)}</div>
+                </div>
+                <div style="flex:1;background:var(--bg-4);border-radius:var(--r-sm);padding:8px;text-align:center">
+                  <div style="font-size:0.7rem;color:var(--text-3)">EQUITY</div>
+                  <div style="font-family:var(--font-mono);font-weight:700;color:var(--warning)">${o.equityPct}%</div>
+                </div>
+              </div>
+              <button class="btn btn-primary btn-sm btn-w-full" style="margin-top:10px"
+                      onclick="GF.ui.confirm('Accept Investment?','${o.investor} will invest $${GF.ui.formatNum(o.amount)} for ${o.equityPct}% of your studio.',()=>{GF.finances.acceptInvestment('${o.investor}',${o.amount},${o.equityPct});renderAll();})">
+                Accept Deal
+              </button>
+            </div>
+          `).join('')
+        : `<div class="empty-state"><div class="empty-state-icon">📈</div><div class="empty-state-title">No Offers Available</div><div class="empty-state-text">Grow your reputation to unlock investor deals.</div></div>`;
+
+      const invList = document.getElementById('active-investments');
+      invList.innerHTML = f.investments.length
+        ? f.investments.map(inv => `
+            <div class="loan-card">
+              <div style="display:flex;justify-content:space-between">
+                <span style="font-weight:600">${inv.investor}</span>
+                <span class="badge badge-gold">${inv.equityPct}% equity</span>
+              </div>
+              <div style="font-size:0.8rem;color:var(--text-3);margin-top:4px">$${GF.ui.formatNum(inv.amount)} invested · Y${inv.date.year}</div>
+            </div>
+          `).join('')
+        : '<div style="color:var(--text-3);font-size:0.875rem">No active investments yet</div>';
+    }
+
+    function renderGameRevenue(s) {
+      const list = document.getElementById('game-revenue-list');
+      if (!s.releasedGames.length) {
+        list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🎮</div><div class="empty-state-title">No Released Games</div></div>`;
+        return;
+      }
+      const sorted = [...s.releasedGames].sort((a,b) => b.totalRevenue - a.totalRevenue);
+      list.innerHTML = sorted.map(g => `
+        <div class="card card-hover" style="margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="font-size:2rem">${GF.GENRES[g.genre]?.icon||'🎮'}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-family:var(--font-display);font-weight:600;font-size:0.9375rem">${g.title}</div>
+              <div style="font-size:0.75rem;color:var(--text-3);margin-top:2px">${g.platforms.map(p=>GF.PLATFORMS[p]?.label||p).join(' · ')} · Y${g.releaseDate.year}</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <div style="font-family:var(--font-mono);font-weight:700;color:${GF.ui.scoreColor(g.reviewScore)}">${g.reviewScore}/100</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;padding:10px;background:var(--bg-3);border-radius:var(--r-md)">
+            <div style="text-align:center">
+              <div style="font-size:0.7rem;color:var(--text-3);margin-bottom:2px">TOTAL REVENUE</div>
+              <div style="font-family:var(--font-mono);font-weight:700;color:var(--success);font-size:0.875rem">$${GF.ui.formatNum(g.totalRevenue,true)}</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:0.7rem;color:var(--text-3);margin-bottom:2px">TOTAL SALES</div>
+              <div style="font-family:var(--font-mono);font-weight:700;font-size:0.875rem">${GF.ui.formatNum(g.totalSales,true)}</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:0.7rem;color:var(--text-3);margin-bottom:2px">MONTHLY</div>
+              <div style="font-family:var(--font-mono);font-weight:700;font-size:0.875rem">${GF.ui.formatNum(g.currentMonthlySales,true)}/mo</div>
+            </div>
+          </div>
+          <div class="progress-bar-wrap sm" style="margin-top:8px">
+            <div class="progress-bar-fill" style="width:${g.currentMonthlySales/Math.max(1,g.firstWeekSales)*100}%"></div>
+          </div>
+          <div style="font-size:0.7rem;color:var(--text-3);text-align:right;margin-top:4px">Sales velocity ${Math.round(g.currentMonthlySales/Math.max(1,g.firstWeekSales)*100)}%</div>
+        </div>
+      `).join('');
+    }
+
+    function updateLoanCalc() {
+      const amount   = parseInt(document.getElementById('loan-amount').value) || 0;
+      const rate     = parseInt(document.getElementById('loan-rate').value) || 10;
+      const term     = parseInt(document.getElementById('loan-term').value) || 24;
+      const monthly  = Math.round(amount * (1 + rate/100) / term);
+      const total    = monthly * term;
+      if (GF.state.isLoaded()) {
+        const maxLoan = GF.finances._maxLoanAmount();
+        document.getElementById('loan-max').textContent = GF.ui.formatCash(maxLoan);
+      }
+      document.getElementById('loan-monthly').textContent = '-' + GF.ui.formatCash(monthly) + '/mo';
+      document.getElementById('loan-total').textContent   = GF.ui.formatCash(total);
+    }
+
+    function doTakeLoan() {
+      const amount = parseInt(document.getElementById('loan-amount').value);
+      const rate   = parseInt(document.getElementById('loan-rate').value);
+      const term   = parseInt(document.getElementById('loan-term').value);
+      GF.finances.takeLoan(amount, rate, term);
+      GF.ui.closeModal('loan-modal');
+      renderAll();
+    }
+
+    function doIPO() {
+      GF.ui.confirm(
+        '🚀 Initial Public Offering',
+        'Take your studio public! This will generate massive funding but you will have stockholder obligations.',
+        () => { GF.finances.goPublic(); renderAll(); }
+      );
+    }
+  </script>
+</body>
+</html>

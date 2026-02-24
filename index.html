@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="theme-color" content="#050508">
+  <title>GameForge Studio Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    body { overflow-x: hidden; }
+
+    /* ── Landing shell ── */
+    .auth-page {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 20px 16px 40px;
+    }
+
+    /* ── Animated background ── */
+    .bg-canvas { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
+    .bg-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.18;
+      animation: pulseSlow 8s ease infinite;
+    }
+    .bg-orb-1 { width: 60vw; height: 60vw; max-width: 500px; max-height: 500px; background: var(--violet); top: -10%; left: -10%; animation-delay: 0s; }
+    .bg-orb-2 { width: 50vw; height: 50vw; max-width: 400px; max-height: 400px; background: var(--cyan); bottom: -15%; right: -5%; animation-delay: 3s; }
+    .bg-orb-3 { width: 40vw; height: 40vw; max-width: 300px; max-height: 300px; background: var(--purple); top: 50%; left: 50%; transform: translate(-50%,-50%); animation-delay: 5s; }
+    .bg-grid {
+      position: fixed; inset: 0; z-index: 0;
+      background-image: linear-gradient(rgba(108,99,255,0.04) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(108,99,255,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    /* ── Logo ── */
+    .hero-logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+      position: relative;
+      z-index: 1;
+      animation: fadeInDown 0.6s ease;
+    }
+    .logo-icon {
+      width: 72px; height: 72px;
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem;
+      box-shadow: 0 0 40px rgba(108,99,255,0.5);
+      animation: glowPulse 3s ease infinite;
+    }
+    .logo-name {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .logo-tagline {
+      font-size: 0.9rem;
+      color: var(--text-3);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* ── Auth card ── */
+    .auth-card {
+      position: relative; z-index: 1;
+      background: rgba(13, 13, 20, 0.8);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--border-bright);
+      border-radius: var(--r-2xl);
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 8px 48px rgba(0,0,0,0.5), 0 0 60px rgba(108,99,255,0.08);
+      animation: fadeInUp 0.5s ease 0.2s both;
+    }
+
+    .auth-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--bg-3);
+      border-radius: var(--r-lg);
+      padding: 4px;
+      margin-bottom: 24px;
+    }
+    .auth-tab {
+      flex: 1;
+      padding: 9px;
+      border-radius: var(--r-md);
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-3);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: all var(--t-base);
+    }
+    .auth-tab.active {
+      background: var(--violet);
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(108,99,255,0.4);
+    }
+
+    .auth-form { display: flex; flex-direction: column; gap: 16px; }
+    .auth-form.hidden { display: none; }
+
+    .divider-text {
+      display: flex; align-items: center; gap: 12px;
+      color: var(--text-4); font-size: 0.75rem; margin: 4px 0;
+    }
+    .divider-text::before, .divider-text::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    .auth-error {
+      background: var(--danger-dim);
+      border: 1px solid rgba(255,71,87,0.25);
+      border-radius: var(--r-md);
+      padding: 10px 14px;
+      font-size: 0.875rem;
+      color: var(--danger);
+      display: none;
+    }
+    .auth-error.show { display: block; }
+
+    .reset-link {
+      font-size: 0.8125rem;
+      color: var(--text-3);
+      text-align: right;
+      cursor: pointer;
+      transition: color var(--t-fast);
+    }
+    .reset-link:hover { color: var(--violet-light); }
+
+    /* ── Features strip ── */
+    .features-strip {
+      position: relative; z-index: 1;
+      display: flex;
+      gap: 20px;
+      margin-top: 28px;
+      flex-wrap: wrap;
+      justify-content: center;
+      animation: fadeIn 0.5s ease 0.5s both;
+    }
+    .feature-chip {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(108,99,255,0.08);
+      border: 1px solid var(--border);
+      border-radius: var(--r-full);
+      padding: 6px 14px;
+      font-size: 0.75rem;
+      color: var(--text-3);
+    }
+    .feature-chip span { font-size: 1rem; }
+
+    /* ── Loading overlay ── */
+    #auth-loading {
+      position: fixed; inset: 0; background: var(--bg-base);
+      display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px;
+      z-index: 9999;
+    }
+    #auth-loading.hidden { display: none; }
+  </style>
+</head>
+<body>
+  <!-- Loading overlay -->
+  <div id="auth-loading">
+    <div class="logo-icon" style="width:56px;height:56px">🎮</div>
+    <div class="spinner spinner-lg"></div>
+  </div>
+
+  <!-- Background -->
+  <div class="bg-canvas">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+  </div>
+  <div class="bg-grid"></div>
+
+  <div class="auth-page">
+    <!-- Logo -->
+    <div class="hero-logo">
+      <div class="logo-icon">🎮</div>
+      <div class="logo-name gradient-text">GameForge</div>
+      <div class="logo-tagline">Studio Simulator</div>
+    </div>
+
+    <!-- Auth Card -->
+    <div class="auth-card">
+      <!-- Tabs -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-login"    onclick="switchTab('login')">Sign In</button>
+        <button class="auth-tab"        id="tab-register" onclick="switchTab('register')">Create Account</button>
+      </div>
+
+      <!-- Error -->
+      <div class="auth-error" id="auth-error"></div>
+
+      <!-- LOGIN FORM -->
+      <form class="auth-form" id="login-form" onsubmit="doLogin(event)">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <div class="input-group">
+            <span class="input-icon">📧</span>
+            <input class="input" type="email" id="login-email" placeholder="you@studio.com" required autocomplete="email">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" style="display:flex;justify-content:space-between">
+            Password
+            <span class="reset-link" onclick="doReset()">Forgot password?</span>
+          </label>
+          <div class="input-group">
+            <span class="input-icon">🔒</span>
+            <input class="input" type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-w-full btn-lg" id="login-btn">
+          <span id="login-btn-text">Sign In</span>
+          <div class="spinner spinner-sm hidden" id="login-spinner"></div>
+        </button>
+      </form>
+
+      <!-- REGISTER FORM -->
+      <form class="auth-form hidden" id="register-form" onsubmit="doRegister(event)">
+        <div class="form-group">
+          <label class="form-label">Your Name</label>
+          <div class="input-group">
+            <span class="input-icon">👤</span>
+            <input class="input" type="text" id="reg-name" placeholder="Studio Founder" required autocomplete="name">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <div class="input-group">
+            <span class="input-icon">📧</span>
+            <input class="input" type="email" id="reg-email" placeholder="you@studio.com" required autocomplete="email">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password <span class="form-hint">(min 6 chars)</span></label>
+          <div class="input-group">
+            <span class="input-icon">🔒</span>
+            <input class="input" type="password" id="reg-password" placeholder="••••••••" minlength="6" required autocomplete="new-password">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-w-full btn-lg" id="register-btn">
+          <span id="reg-btn-text">Create Account</span>
+          <div class="spinner spinner-sm hidden" id="reg-spinner"></div>
+        </button>
+        <p style="font-size:0.75rem;color:var(--text-4);text-align:center">
+          By creating an account you agree to our Terms of Service.
+        </p>
+      </form>
+    </div>
+
+    <!-- Features -->
+    <div class="features-strip">
+      <div class="feature-chip"><span>🏢</span> Build Your Studio</div>
+      <div class="feature-chip"><span>🎮</span> 14+ Genres</div>
+      <div class="feature-chip"><span>🏆</span> Real Competitors</div>
+      <div class="feature-chip"><span>📈</span> Go Public (IPO)</div>
+      <div class="feature-chip"><span>🌐</span> Cloud Save</div>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div id="toast-container"></div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+  <!-- Game core -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/notifications.js"></script>
+
+  <script>
+    // ── Init ──────────────────────────────────────────────
+    const loader = document.getElementById('auth-loading');
+
+    GF.auth.init(
+      async (user) => {
+        // Logged in — check for saves
+        try {
+          const hasSave = await GF.db.hasSave(user.uid);
+          window.location.href = hasSave ? 'dashboard.html' : 'setup.html';
+        } catch (e) {
+          loader.classList.add('hidden');
+        }
+      },
+      () => {
+        // Not logged in — show page
+        loader.classList.add('hidden');
+      }
+    );
+
+    GF.notifications.init();
+
+    // ── Tab switching ──────────────────────────────────────
+    function switchTab(tab) {
+      document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
+      document.getElementById('register-form').classList.toggle('hidden', tab !== 'register');
+      document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+      document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+      hideError();
+    }
+
+    // ── Login ──────────────────────────────────────────────
+    async function doLogin(e) {
+      e.preventDefault();
+      const email    = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      setLoading('login', true);
+      hideError();
+
+      try {
+        await GF.auth.login(email, password);
+        // redirect happens via onAuthStateChanged
+      } catch (err) {
+        showError(GF.auth.errorMessage(err.code));
+        setLoading('login', false);
+      }
+    }
+
+    // ── Register ───────────────────────────────────────────
+    async function doRegister(e) {
+      e.preventDefault();
+      const name     = document.getElementById('reg-name').value.trim();
+      const email    = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value;
+      setLoading('register', true);
+      hideError();
+
+      try {
+        await GF.auth.register(email, password, name);
+        window.location.href = 'setup.html';
+      } catch (err) {
+        showError(GF.auth.errorMessage(err.code));
+        setLoading('register', false);
+      }
+    }
+
+    // ── Reset password ──────────────────────────────────────
+    async function doReset() {
+      const email = document.getElementById('login-email').value.trim();
+      if (!email) {
+        showError('Enter your email address first.');
+        return;
+      }
+      try {
+        await GF.auth.resetPassword(email);
+        showError('Password reset email sent! Check your inbox.', true);
+      } catch (err) {
+        showError(GF.auth.errorMessage(err.code));
+      }
+    }
+
+    // ── Helpers ────────────────────────────────────────────
+    function setLoading(form, loading) {
+      if (form === 'login') {
+        document.getElementById('login-btn-text').textContent = loading ? 'Signing in…' : 'Sign In';
+        document.getElementById('login-spinner').classList.toggle('hidden', !loading);
+        document.getElementById('login-btn').disabled = loading;
+      } else {
+        document.getElementById('reg-btn-text').textContent = loading ? 'Creating…' : 'Create Account';
+        document.getElementById('reg-spinner').classList.toggle('hidden', !loading);
+        document.getElementById('register-btn').disabled = loading;
+      }
+    }
+
+    function showError(msg, success = false) {
+      const el = document.getElementById('auth-error');
+      el.textContent = msg;
+      el.className = `auth-error show ${success ? 'text-success' : ''}`;
+      if (success) el.style.background = 'var(--success-dim)';
+      else el.style.background = '';
+    }
+
+    function hideError() {
+      document.getElementById('auth-error').classList.remove('show');
+    }
+  </script>
+</body>
+</html>

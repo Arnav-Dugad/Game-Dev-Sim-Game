@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="theme-color" content="#050508">
+  <title>Research | GameForge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    .research-node {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 16px;
+      margin-bottom: 10px;
+      transition: all var(--t-base);
+      cursor: pointer;
+    }
+    .research-node:hover { border-color: var(--border-bright); background: var(--bg-card-hover); }
+    .research-node.completed { border-color: var(--success); opacity: 0.7; }
+    .research-node.available { border-color: var(--violet); }
+    .research-node.available:hover { box-shadow: 0 0 20px rgba(108,99,255,0.2); }
+    .research-node.locked { opacity: 0.4; cursor: not-allowed; }
+    .research-node.in-progress { border-color: var(--cyan); box-shadow: 0 0 16px rgba(0,212,255,0.15); }
+
+    .category-header {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 10px 0 8px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .bonus-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--violet-dim);
+      border: 1px solid rgba(108,99,255,0.2);
+      border-radius: var(--r-full);
+      padding: 3px 8px;
+      font-size: 0.7rem;
+      color: var(--violet-light);
+      font-weight: 600;
+    }
+    .bonus-pill.green { background: var(--success-dim); border-color: rgba(0,230,118,0.2); color: var(--success); }
+    .bonus-pill.cyan  { background: var(--cyan-dim); border-color: rgba(0,212,255,0.2); color: var(--cyan); }
+  </style>
+</head>
+<body>
+  <div id="page-loader" class="full-page-loader">
+    <div style="font-size:2rem">🔬</div>
+    <div class="spinner spinner-lg"></div>
+  </div>
+
+  <nav class="top-nav">
+    <a href="dashboard.html" class="nav-logo" style="color:inherit;text-decoration:none">
+      <div class="nav-logo-icon">🎮</div>
+      <span id="nav-company-name">GameForge</span>
+    </a>
+    <div class="time-display" style="margin:0 auto">
+      <button class="speed-btn" data-speed="0">⏸</button>
+      <button class="speed-btn active" data-speed="1">▶</button>
+      <button class="speed-btn" data-speed="2">⏩</button>
+      <button class="speed-btn" data-speed="4">⏭</button>
+      <span id="nav-time">Jan Y2005 W1</span>
+    </div>
+    <div class="cash-display">💰 <span id="nav-cash">$0</span></div>
+  </nav>
+  <div class="top-nav-spacer"></div>
+
+  <main class="app-content">
+    <div class="section-header" style="margin-bottom:12px">
+      <div>
+        <h2 class="section-title">🔬 Research & Technology</h2>
+        <div class="section-subtitle" id="res-subtitle">Unlock new capabilities to build better games</div>
+      </div>
+    </div>
+
+    <!-- Current research progress -->
+    <div class="card card-glow" style="margin-bottom:16px" id="current-research-card">
+      <div id="no-research" style="color:var(--text-3);font-size:0.875rem">No research in progress. Start a research project below.</div>
+      <div id="active-research" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div>
+            <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--cyan);font-weight:600;margin-bottom:4px">RESEARCHING</div>
+            <div style="font-family:var(--font-display);font-weight:700;font-size:1.125rem" id="cur-res-label">—</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:var(--font-mono);font-size:1.5rem;font-weight:700;color:var(--cyan)" id="cur-res-pct">0%</div>
+            <button class="btn btn-ghost btn-xs" onclick="cancelResearch()">Cancel</button>
+          </div>
+        </div>
+        <div class="progress-bar-wrap xl">
+          <div class="progress-bar-fill" id="res-progress-bar" style="width:0%;background:linear-gradient(90deg,var(--cyan),var(--violet))"></div>
+        </div>
+        <div style="font-size:0.75rem;color:var(--text-3);margin-top:8px" id="cur-res-desc"></div>
+      </div>
+    </div>
+
+    <!-- Aggregate bonuses earned -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px" id="bonus-pills">
+    </div>
+
+    <!-- Research tree by category -->
+    <div id="research-tree"></div>
+
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="dashboard.html"   class="nav-item"><span class="nav-item-icon">🏠</span>HQ</a>
+    <a href="development.html" class="nav-item"><span class="nav-item-icon">🔨</span>Dev</a>
+    <a href="team.html"        class="nav-item"><span class="nav-item-icon">👥</span>Team</a>
+    <a href="market.html"      class="nav-item"><span class="nav-item-icon">📈</span>Market</a>
+    <a href="finances.html"    class="nav-item"><span class="nav-item-icon">💰</span>Finance</a>
+    <a href="settings.html"    class="nav-item active"><span class="nav-item-icon">⚙️</span>More<span class="nav-badge" id="notif-badge" style="display:none">0</span></a>
+  </nav>
+
+  <div id="confirm-overlay"><div id="confirm-box">
+    <h3 id="confirm-title" style="font-family:var(--font-display);font-size:1.125rem;margin-bottom:8px"></h3>
+    <p id="confirm-message" style="color:var(--text-3);font-size:0.875rem;margin-bottom:20px"></p>
+    <div style="display:flex;gap:10px"><button id="confirm-cancel" class="btn btn-secondary flex-1">Cancel</button><button id="confirm-ok" class="btn btn-primary flex-1">Confirm</button></div>
+  </div></div>
+  <div id="toast-container"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/companies.js"></script>
+  <script src="js/market.js"></script>
+  <script src="js/research.js"></script>
+  <script src="js/team.js"></script>
+  <script src="js/finances.js"></script>
+  <script src="js/development.js"></script>
+  <script src="js/publishing.js"></script>
+  <script src="js/awards.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/export-import.js"></script>
+  <script src="js/ui.js"></script>
+
+  <script>
+    (async () => {
+      await GF.auth.requireAuth();
+      try { await GF.db.load('autosave'); } catch(e) { window.location.href='setup.html'; return; }
+      GF.companies.init();
+      GF.team.refreshApplicants();
+      GF.notifications.init();
+      GF.ui.init();
+      GF.engine.start();
+      GF.db.startAutoSave(60000);
+      renderAll();
+      GF.ui.hideLoader();
+      setInterval(renderAll, 4000);
+    })();
+
+    function renderAll() {
+      if (!GF.state.isLoaded()) return;
+      const s = GF.state.get();
+      document.getElementById('nav-company-name').textContent = s.company.name;
+      const completed = s.research.completedIds.length;
+      document.getElementById('res-subtitle').textContent = `${completed} / ${GF.RESEARCH_TREE.length} technologies researched`;
+
+      // Current research
+      if (s.research.currentNodeId) {
+        const node = GF.research.getNode(s.research.currentNodeId);
+        document.getElementById('no-research').style.display   = 'none';
+        document.getElementById('active-research').style.display = '';
+        document.getElementById('cur-res-label').textContent   = node.icon + ' ' + node.label;
+        document.getElementById('cur-res-pct').textContent     = Math.round(s.research.progress) + '%';
+        document.getElementById('res-progress-bar').style.width = s.research.progress + '%';
+        document.getElementById('cur-res-desc').textContent    = node.desc;
+      } else {
+        document.getElementById('no-research').style.display   = '';
+        document.getElementById('active-research').style.display = 'none';
+      }
+
+      // Bonus pills
+      const qualBonus = GF.research.getQualityBonus();
+      const speedBonus = GF.research.getDevSpeedBonus();
+      const audBonus   = GF.research.getAudienceBonus();
+      document.getElementById('bonus-pills').innerHTML = `
+        <span class="bonus-pill">🎨 Quality x${qualBonus.toFixed(2)}</span>
+        <span class="bonus-pill cyan">⚡ Dev Speed x${speedBonus.toFixed(2)}</span>
+        <span class="bonus-pill green">👥 Audience x${audBonus.toFixed(2)}</span>
+        <span class="bonus-pill">${completed} / ${GF.RESEARCH_TREE.length} completed</span>
+      `;
+
+      renderTree(s);
+    }
+
+    function renderTree(s) {
+      const categories = GF.research.getCategories();
+      const container  = document.getElementById('research-tree');
+      container.innerHTML = categories.map(cat => {
+        const nodes = GF.research.getByCategory(cat);
+        const catIcons = { Graphics:'🖼️', Gameplay:'⚙️', Audio:'🎵', Engine:'🔧', Online:'🌐', 'VR/AR':'🥽', Business:'📊' };
+        const doneCount = nodes.filter(n => GF.research.isCompleted(n.id)).length;
+
+        return `
+          <div class="category-header">
+            ${catIcons[cat] || '🔬'} ${cat}
+            <span class="badge badge-muted" style="margin-left:auto">${doneCount}/${nodes.length}</span>
+          </div>
+          <div style="margin-bottom:16px">
+            ${nodes.map(node => buildNodeCard(node, s)).join('')}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function buildNodeCard(node, s) {
+      const completed  = GF.research.isCompleted(node.id);
+      const available  = GF.research.isAvailable(node.id);
+      const inProgress = s.research.currentNodeId === node.id;
+      const locked     = !completed && !available && !inProgress;
+
+      let stateClass = locked ? 'locked' : available ? 'available' : completed ? 'completed' : '';
+      if (inProgress) stateClass = 'in-progress';
+
+      const bonusLabels = Object.entries(node.bonus).map(([k, v]) => {
+        if (k === 'unlocks') return `<span class="bonus-pill cyan">🔓 Unlocks: ${v}</span>`;
+        if (typeof v === 'number') return `<span class="bonus-pill green">+${Math.round(v*100)}% ${k.replace(/([A-Z])/g,' $1').trim()}</span>`;
+        return '';
+      }).join('');
+
+      const reqLabels = node.requires.map(r => {
+        const rNode = GF.research.getNode(r);
+        const done  = GF.research.isCompleted(r);
+        return `<span class="badge ${done?'badge-success':'badge-muted'}" style="font-size:0.65rem">${done?'✓':''} ${rNode?.label||r}</span>`;
+      }).join('');
+
+      return `
+        <div class="research-node ${stateClass}" onclick="${available ? `startResearch('${node.id}')` : ''}">
+          <div style="display:flex;align-items:start;gap:12px">
+            <div style="font-size:1.75rem;flex-shrink:0;line-height:1;padding-top:2px">${node.icon}</div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
+                <span style="font-family:var(--font-display);font-weight:600;font-size:0.9375rem">${node.label}</span>
+                ${completed ? '<span class="badge badge-success">✓ Complete</span>' : ''}
+                ${inProgress ? '<span class="badge badge-cyan animate-pulse">⏳ In Progress</span>' : ''}
+                ${locked ? '<span class="badge badge-muted">🔒 Locked</span>' : ''}
+              </div>
+              <div style="font-size:0.8125rem;color:var(--text-3);margin-bottom:8px">${node.desc}</div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+                ${bonusLabels}
+              </div>
+              ${node.requires.length ? `<div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+                <span style="font-size:0.7rem;color:var(--text-4)">Requires:</span>
+                ${reqLabels}
+              </div>` : ''}
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <div style="font-family:var(--font-mono);font-weight:700;font-size:0.875rem;color:var(--success)">$${GF.ui.formatNum(node.cost,true)}</div>
+              <div style="font-size:0.75rem;color:var(--text-3)">${node.weeks} weeks</div>
+            </div>
+          </div>
+          ${inProgress ? `<div class="progress-bar-wrap sm" style="margin-top:10px">
+            <div class="progress-bar-fill" style="width:${GF.state.get().research.progress}%;background:linear-gradient(90deg,var(--cyan),var(--violet))"></div>
+          </div>` : ''}
+          ${available && !s.research.currentNodeId ? `
+          <button class="btn btn-primary btn-sm btn-w-full" style="margin-top:10px"
+                  onclick="event.stopPropagation();startResearch('${node.id}')">
+            Start Research — $${GF.ui.formatNum(node.cost,true)}
+          </button>` : ''}
+        </div>`;
+    }
+
+    function startResearch(nodeId) {
+      const node = GF.research.getNode(nodeId);
+      const s = GF.state.get();
+      if (s.research.currentNodeId) {
+        GF.notifications.push('warning', 'Research In Progress', 'Finish current research first.');
+        return;
+      }
+      GF.ui.confirm(
+        `Research: ${node.label}`,
+        `Start researching ${node.label} for $${GF.ui.formatNum(node.cost)} over ${node.weeks} weeks? ${node.desc}`,
+        () => { GF.research.startResearch(nodeId); renderAll(); }
+      );
+    }
+
+    function cancelResearch() {
+      GF.ui.confirm('Cancel Research?', 'Canceling will lose all current progress.',
+        () => {
+          const s = GF.state.get();
+          s.research.currentNodeId = null;
+          s.research.progress = 0;
+          renderAll();
+        }, true
+      );
+    }
+  </script>
+</body>
+</html>

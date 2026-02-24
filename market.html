@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="theme-color" content="#050508">
+  <title>Market | GameForge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    .genre-trend-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .genre-trend-row:last-child { border-bottom: none; }
+    .genre-icon-label { display: flex; align-items: center; gap: 6px; min-width: 110px; flex-shrink: 0; }
+    .genre-bar-bg { flex: 1; height: 8px; background: var(--bg-4); border-radius: var(--r-full); overflow: hidden; }
+    .genre-bar-fill { height: 100%; border-radius: var(--r-full); transition: width 0.8s ease; }
+    .genre-score { font-family: var(--font-mono); font-size: 0.8125rem; font-weight: 700; min-width: 28px; text-align: right; }
+
+    .platform-share-row {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
+    }
+    .platform-share-label { width: 120px; font-size: 0.875rem; flex-shrink: 0; }
+    .platform-share-bar { flex: 1; height: 10px; background: var(--bg-4); border-radius: var(--r-full); overflow: hidden; }
+    .platform-share-fill { height: 100%; border-radius: var(--r-full); transition: width 0.8s ease; }
+    .platform-share-pct { font-family: var(--font-mono); font-size: 0.8125rem; font-weight: 600; min-width: 36px; text-align: right; }
+
+    .company-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 16px;
+      margin-bottom: 10px;
+      transition: all var(--t-base);
+    }
+    .company-card:hover { border-color: var(--border-bright); background: var(--bg-card-hover); }
+
+    .news-item {
+      display: flex; align-items: start; gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .news-item:last-child { border-bottom: none; }
+
+    .sentiment-gauge {
+      width: 100%;
+      height: 12px;
+      background: var(--bg-4);
+      border-radius: var(--r-full);
+      overflow: hidden;
+      margin: 8px 0;
+    }
+    .sentiment-fill {
+      height: 100%;
+      border-radius: var(--r-full);
+      background: linear-gradient(90deg, var(--danger), var(--warning), var(--success));
+      transition: width 0.8s ease;
+    }
+  </style>
+</head>
+<body>
+  <div id="page-loader" class="full-page-loader">
+    <div style="font-size:2rem">📈</div>
+    <div class="spinner spinner-lg"></div>
+  </div>
+
+  <nav class="top-nav">
+    <a href="dashboard.html" class="nav-logo" style="color:inherit;text-decoration:none">
+      <div class="nav-logo-icon">🎮</div>
+      <span id="nav-company-name">GameForge</span>
+    </a>
+    <div class="time-display" style="margin:0 auto">
+      <button class="speed-btn" data-speed="0">⏸</button>
+      <button class="speed-btn active" data-speed="1">▶</button>
+      <button class="speed-btn" data-speed="2">⏩</button>
+      <button class="speed-btn" data-speed="4">⏭</button>
+      <span id="nav-time">Jan Y2005 W1</span>
+    </div>
+    <div class="cash-display">💰 <span id="nav-cash">$0</span></div>
+  </nav>
+  <div class="top-nav-spacer"></div>
+
+  <main class="app-content">
+    <div class="section-header" style="margin-bottom:12px">
+      <div>
+        <h2 class="section-title">📈 Market Intelligence</h2>
+        <div class="section-subtitle" id="mkt-subtitle">Industry trends and competitor tracking</div>
+      </div>
+    </div>
+
+    <!-- Consumer sentiment banner -->
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-family:var(--font-display);font-weight:600">Consumer Sentiment</div>
+        <div style="font-family:var(--font-mono);font-size:1.25rem;font-weight:700" id="sentiment-val">—</div>
+      </div>
+      <div class="sentiment-gauge"><div class="sentiment-fill" id="sentiment-bar" style="width:50%"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:0.7rem;color:var(--text-4);margin-top:4px">
+        <span>Pessimistic</span><span>Neutral</span><span>Optimistic</span>
+      </div>
+    </div>
+
+    <div class="tabs" style="margin-bottom:16px">
+      <button class="tab-btn active" onclick="switchTab('trends',this)">Trends</button>
+      <button class="tab-btn" onclick="switchTab('companies',this)">Companies</button>
+      <button class="tab-btn" onclick="switchTab('news',this)">Industry News</button>
+    </div>
+
+    <!-- Trends -->
+    <div id="tab-trends">
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-header">
+          <div class="card-title">Genre Demand</div>
+          <span id="top-genre-badge" class="badge badge-gold"></span>
+        </div>
+        <div id="genre-trends-list"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-header">
+          <div class="card-title">Platform Market Share</div>
+        </div>
+        <div id="platform-shares-list"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="margin-bottom:10px">💡 Market Advice</div>
+        <div id="market-advice" style="font-size:0.875rem;color:var(--text-2);line-height:1.6"></div>
+      </div>
+    </div>
+
+    <!-- Companies -->
+    <div id="tab-companies" style="display:none">
+      <div style="font-size:0.875rem;color:var(--text-3);margin-bottom:12px" id="co-subtitle">Tracking the gaming industry giants</div>
+      <div id="companies-list"></div>
+    </div>
+
+    <!-- News -->
+    <div id="tab-news" style="display:none">
+      <div style="font-size:0.875rem;color:var(--text-3);margin-bottom:12px">Recent game releases from across the industry.</div>
+      <div id="news-list"></div>
+    </div>
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="dashboard.html"   class="nav-item"><span class="nav-item-icon">🏠</span>HQ</a>
+    <a href="development.html" class="nav-item"><span class="nav-item-icon">🔨</span>Dev</a>
+    <a href="team.html"        class="nav-item"><span class="nav-item-icon">👥</span>Team</a>
+    <a href="market.html"      class="nav-item active"><span class="nav-item-icon">📈</span>Market</a>
+    <a href="finances.html"    class="nav-item"><span class="nav-item-icon">💰</span>Finance</a>
+    <a href="settings.html"    class="nav-item"><span class="nav-item-icon">⚙️</span>More<span class="nav-badge" id="notif-badge" style="display:none">0</span></a>
+  </nav>
+
+  <div id="toast-container"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/companies.js"></script>
+  <script src="js/market.js"></script>
+  <script src="js/research.js"></script>
+  <script src="js/team.js"></script>
+  <script src="js/finances.js"></script>
+  <script src="js/development.js"></script>
+  <script src="js/publishing.js"></script>
+  <script src="js/awards.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/export-import.js"></script>
+  <script src="js/ui.js"></script>
+
+  <script>
+    let activeTab = 'trends';
+
+    (async () => {
+      await GF.auth.requireAuth();
+      try { await GF.db.load('autosave'); } catch(e) { window.location.href='setup.html'; return; }
+      GF.companies.init();
+      GF.team.refreshApplicants();
+      GF.notifications.init();
+      GF.ui.init();
+      GF.engine.start();
+      GF.db.startAutoSave(60000);
+      renderAll();
+      GF.ui.hideLoader();
+      setInterval(renderAll, 3000);
+    })();
+
+    function switchTab(tab, el) {
+      activeTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      ['trends','companies','news'].forEach(t =>
+        document.getElementById(`tab-${t}`).style.display = t === tab ? '' : 'none'
+      );
+      renderAll();
+    }
+
+    function renderAll() {
+      if (!GF.state.isLoaded()) return;
+      const s = GF.state.get();
+      document.getElementById('nav-company-name').textContent = s.company.name;
+      document.getElementById('mkt-subtitle').textContent = `Year ${s.time.year} · Month ${s.time.month}`;
+
+      // Sentiment
+      const sent = s.market.consumerSentiment;
+      document.getElementById('sentiment-val').textContent = sent + '%';
+      document.getElementById('sentiment-val').style.color = sent >= 65 ? 'var(--success)' : sent >= 40 ? 'var(--warning)' : 'var(--danger)';
+      document.getElementById('sentiment-bar').style.width = sent + '%';
+
+      if (activeTab === 'trends')    renderTrends(s);
+      else if (activeTab === 'companies') renderCompanies();
+      else renderNews();
+    }
+
+    function renderTrends(s) {
+      const trends = s.market.trends;
+      const sorted = Object.entries(trends).sort((a,b) => b[1] - a[1]);
+      const top    = sorted[0];
+
+      // Top genre badge
+      if (top) {
+        const g = GF.GENRES[top[0]];
+        document.getElementById('top-genre-badge').textContent = `🔥 Hottest: ${g?.label || top[0]}`;
+      }
+
+      // Genre bars
+      document.getElementById('genre-trends-list').innerHTML = sorted.map(([id, score]) => {
+        const g = GF.GENRES[id];
+        if (!g) return '';
+        const pct = Math.round(score);
+        const isHot  = pct >= 70;
+        const isCold = pct < 35;
+        const barColor = isHot ? 'var(--success)' : isCold ? 'var(--danger)' : 'var(--violet)';
+        const isSpecialty = id === s.company.specialtyGenre;
+
+        return `
+          <div class="genre-trend-row">
+            <div class="genre-icon-label">
+              <span style="font-size:1.2rem">${g.icon}</span>
+              <span style="font-size:0.8125rem;font-weight:${isSpecialty?700:400};color:${isSpecialty?'var(--violet-light)':'var(--text-2)'}">${g.label}</span>
+              ${isSpecialty ? '<span style="font-size:0.6rem;color:var(--violet)">★</span>' : ''}
+            </div>
+            <div class="genre-bar-bg">
+              <div class="genre-bar-fill" style="width:${pct}%;background:${barColor}"></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px">
+              ${isHot  ? '<span class="badge badge-success" style="font-size:0.6rem;padding:2px 6px">HOT</span>' : ''}
+              ${isCold ? '<span class="badge badge-danger"  style="font-size:0.6rem;padding:2px 6px">COLD</span>' : ''}
+            </div>
+            <div class="genre-score" style="color:${barColor}">${pct}</div>
+          </div>`;
+      }).join('');
+
+      // Platform shares
+      const shares = s.market.platformShares;
+      const platformColors = { pc: 'var(--cyan)', ps5: 'var(--violet)', xbox: 'var(--success)', switch: 'var(--danger)' };
+      document.getElementById('platform-shares-list').innerHTML = Object.entries(shares).map(([id, pct]) => {
+        const p = GF.PLATFORMS[id];
+        if (!p) return '';
+        const color = platformColors[id] || 'var(--violet)';
+        return `
+          <div class="platform-share-row">
+            <div class="platform-share-label">${p.icon} ${p.label.split('(')[0]}</div>
+            <div class="platform-share-bar"><div class="platform-share-fill" style="width:${pct}%;background:${color}"></div></div>
+            <div class="platform-share-pct" style="color:${color}">${Math.round(pct)}%</div>
+          </div>`;
+      }).join('');
+
+      // Market advice
+      const topTrends = GF.market.getTopTrends(3);
+      const mySpecialty = GF.GENRES[s.company.specialtyGenre];
+      const myTrend = GF.market.getTrend(s.company.specialtyGenre);
+      const advice = [];
+
+      if (myTrend >= 70) advice.push(`✅ Your specialty in <strong>${mySpecialty?.label}</strong> is currently very popular (${Math.round(myTrend)}/100). Now is a great time to release!`);
+      else if (myTrend < 35) advice.push(`⚠️ Your specialty in <strong>${mySpecialty?.label}</strong> is currently cold (${Math.round(myTrend)}/100). Consider releasing in a hotter genre.`);
+
+      if (topTrends[0]) advice.push(`🔥 <strong>${topTrends[0].label}</strong> games are the hottest right now (${topTrends[0].score}/100). Perfect timing for releases.`);
+
+      const coldGenres = Object.entries(trends).filter(([, v]) => v < 30).map(([id]) => GF.GENRES[id]?.label).filter(Boolean);
+      if (coldGenres.length) advice.push(`❄️ Avoid releasing: <strong>${coldGenres.slice(0,3).join(', ')}</strong> — currently weak market demand.`);
+
+      if (s.market.consumerSentiment > 70) advice.push(`😊 Consumer sentiment is high (${Math.round(s.market.consumerSentiment)}%). Sales multipliers are boosted.`);
+      else if (s.market.consumerSentiment < 40) advice.push(`😟 Consumer sentiment is low (${Math.round(s.market.consumerSentiment)}%). Consider delaying major releases.`);
+
+      document.getElementById('market-advice').innerHTML = advice.map(a => `<p style="margin-bottom:8px">${a}</p>`).join('') || '<p style="color:var(--text-3)">No specific advice at this time. Keep releasing great games!</p>';
+    }
+
+    function renderCompanies() {
+      const list = document.getElementById('companies-list');
+      document.getElementById('co-subtitle').textContent = `Tracking ${GF.COMPANIES_DATA.length} gaming companies`;
+
+      list.innerHTML = GF.COMPANIES_DATA.map(co => {
+        const releases = GF.companies.getRecentReleases(100).filter(r => r.companyId === co.id);
+        const avgScore = releases.length ? Math.round(releases.reduce((a,b)=>a+b.quality,0)/releases.length) : 0;
+        const textColor = GF.ui._contrastColor(co.logoColor);
+
+        return `
+          <div class="company-card">
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
+              <div style="width:48px;height:48px;border-radius:var(--r-md);background:${co.logoColor};display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:1.25rem;color:${textColor};flex-shrink:0;border:1px solid rgba(255,255,255,0.1)">${co.logoChar}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-family:var(--font-display);font-weight:700;font-size:0.9375rem">${co.name}</div>
+                <div style="font-size:0.75rem;color:var(--text-3);margin-top:2px">${co.description}</div>
+              </div>
+              <div style="text-align:right;flex-shrink:0">
+                <div style="font-family:var(--font-mono);font-weight:700;font-size:1rem;color:var(--violet-light)">${co.reputation}</div>
+                <div style="font-size:0.7rem;color:var(--text-4)">reputation</div>
+              </div>
+            </div>
+
+            <!-- Reputation bar -->
+            <div class="progress-bar-wrap sm" style="margin-bottom:8px">
+              <div class="progress-bar-fill" style="width:${co.reputation/10}%;background:linear-gradient(90deg,${co.logoColor},#fff)"></div>
+            </div>
+
+            <!-- Specialties -->
+            <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">
+              ${co.specialties.map(g => GF.ui.genreBadge(g)).join('')}
+            </div>
+
+            <!-- Franchises -->
+            <div style="font-size:0.75rem;color:var(--text-4);margin-bottom:6px">
+              ${co.franchises.slice(0,4).join(' · ')}${co.franchises.length > 4 ? ` +${co.franchises.length-4} more` : ''}
+            </div>
+
+            <!-- Stats -->
+            <div style="display:flex;gap:12px;font-size:0.8rem">
+              <span style="color:var(--text-3)">Founded: <strong style="color:var(--text-2)">${co.founded}</strong></span>
+              <span style="color:var(--text-3)">Recent Avg: <strong style="color:${avgScore?GF.ui.scoreColor(avgScore):'var(--text-4)'}">${avgScore || '—'}/100</strong></span>
+              <span style="color:var(--text-3)">Games: <strong style="color:var(--text-2)">${releases.length}</strong></span>
+            </div>
+
+            <!-- Recent releases -->
+            ${releases.slice(0,2).length ? `
+            <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border-subtle)">
+              ${releases.slice(0,2).map(r => `
+                <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:2px">
+                  <span style="color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:65%">${r.title}</span>
+                  <span style="font-family:var(--font-mono);color:${GF.ui.scoreColor(r.quality)};flex-shrink:0">${r.quality}/100 · Y${r.year}</span>
+                </div>
+              `).join('')}
+            </div>` : ''}
+          </div>`;
+      }).join('');
+    }
+
+    function renderNews() {
+      const list  = document.getElementById('news-list');
+      const items = GF.companies.getRecentReleases(40);
+
+      if (!items.length) {
+        list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📰</div><div class="empty-state-title">No News Yet</div><div class="empty-state-text">Competitor releases will appear here as the game progresses.</div></div>`;
+        return;
+      }
+
+      list.innerHTML = items.map(r => {
+        const co = GF.companies.getCompany(r.companyId);
+        const g  = GF.GENRES[r.genre];
+        const p  = GF.PLATFORMS[r.platform];
+        const textColor = co ? GF.ui._contrastColor(co.logoColor) : '#fff';
+
+        return `
+          <div class="news-item">
+            <div style="width:36px;height:36px;border-radius:8px;background:${co?.logoColor||'#333'};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.875rem;color:${textColor};flex-shrink:0;border:1px solid rgba(255,255,255,0.1)">${co?.logoChar||'?'}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:500;font-size:0.875rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.title}</div>
+              <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">
+                ${GF.ui.genreBadge(r.genre)}
+                <span class="badge badge-muted">${p?.icon||''} ${p?.label?.split('(')[0]||r.platform}</span>
+              </div>
+              <div style="font-size:0.7rem;color:var(--text-4);margin-top:2px">${r.companyName} · Y${r.year} W${r.week}</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <div style="font-family:var(--font-mono);font-weight:700;font-size:1rem;color:${GF.ui.scoreColor(r.quality)}">${r.quality}</div>
+              <div style="font-size:0.65rem;color:var(--text-4)">score</div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+  </script>
+</body>
+</html>

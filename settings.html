@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Settings — GameForge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/animations.css" />
+  <style>
+    /* ── Settings Page Styles ─────────────────────────── */
+    .settings-hero {
+      padding: 24px var(--page-px) 12px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .settings-hero-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+      box-shadow: 0 0 24px rgba(108,99,255,.35);
+    }
+    .settings-hero-text h1 {
+      font-size: 20px; font-weight: 700; color: var(--text-primary);
+      font-family: var(--font-display);
+    }
+    .settings-hero-text p {
+      font-size: 13px; color: var(--text-muted); margin-top: 2px;
+    }
+
+    /* ── Section Titles ───────────────────────────────── */
+    .section-label {
+      font-size: 11px; font-weight: 600; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--text-muted);
+      padding: 20px var(--page-px) 8px;
+    }
+
+    /* ── Settings List ────────────────────────────────── */
+    .settings-list {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      margin: 0 var(--page-px);
+      overflow: hidden;
+    }
+    .settings-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      cursor: default;
+      transition: background .15s;
+    }
+    .settings-row:last-child { border-bottom: none; }
+    .settings-row.clickable { cursor: pointer; }
+    .settings-row.clickable:hover { background: rgba(255,255,255,.03); }
+    .settings-row.danger:hover { background: rgba(239,68,68,.06); }
+    .settings-row-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px;
+      flex-shrink: 0;
+    }
+    .settings-row-icon.violet { background: rgba(108,99,255,.15); }
+    .settings-row-icon.cyan   { background: rgba(0,212,255,.12); }
+    .settings-row-icon.green  { background: rgba(52,211,153,.12); }
+    .settings-row-icon.amber  { background: rgba(251,191,36,.12); }
+    .settings-row-icon.red    { background: rgba(239,68,68,.12); }
+    .settings-row-icon.blue   { background: rgba(96,165,250,.12); }
+    .settings-row-icon.pink   { background: rgba(232,121,249,.12); }
+    .settings-row-body {
+      flex: 1; min-width: 0;
+    }
+    .settings-row-title {
+      font-size: 14px; font-weight: 600; color: var(--text-primary);
+    }
+    .settings-row-sub {
+      font-size: 12px; color: var(--text-muted); margin-top: 1px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .settings-row-right {
+      display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+    }
+    .settings-row.danger .settings-row-title { color: #ef4444; }
+
+    /* ── Speed Picker ─────────────────────────────────── */
+    .speed-picker {
+      display: flex; gap: 6px;
+    }
+    .speed-btn {
+      width: 38px; height: 28px;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-elevated);
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      font-size: 12px; font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .speed-btn:hover { border-color: var(--violet); color: var(--violet); }
+    .speed-btn.active {
+      background: var(--violet);
+      border-color: var(--violet);
+      color: #fff;
+      box-shadow: 0 0 12px rgba(108,99,255,.4);
+    }
+
+    /* ── Save Slots ───────────────────────────────────── */
+    .save-slots {
+      display: flex; flex-direction: column; gap: 10px;
+      padding: 0 var(--page-px);
+    }
+    .save-slot-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .save-slot-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .save-slot-body { flex: 1; min-width: 0; }
+    .save-slot-name {
+      font-size: 13px; font-weight: 600; color: var(--text-primary);
+    }
+    .save-slot-meta {
+      font-size: 11px; color: var(--text-muted); margin-top: 2px;
+    }
+    .save-slot-actions {
+      display: flex; gap: 6px; flex-shrink: 0;
+    }
+    .save-slot-btn {
+      height: 28px; padding: 0 10px;
+      border-radius: 7px;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-elevated);
+      color: var(--text-secondary);
+      font-size: 11px; font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .save-slot-btn:hover { border-color: var(--violet); color: var(--violet); }
+    .save-slot-btn.danger:hover { border-color: #ef4444; color: #ef4444; }
+    .save-slot-empty .save-slot-name { color: var(--text-muted); font-weight: 400; }
+
+    /* ── Export / Import Zone ─────────────────────────── */
+    .export-import-section {
+      padding: 0 var(--page-px);
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    }
+    .ei-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      display: flex; flex-direction: column; gap: 8px;
+      align-items: flex-start;
+    }
+    .ei-card-icon { font-size: 26px; }
+    .ei-card-title {
+      font-size: 13px; font-weight: 700; color: var(--text-primary);
+    }
+    .ei-card-sub {
+      font-size: 11px; color: var(--text-muted); line-height: 1.4;
+    }
+    .ei-card .btn { width: 100%; margin-top: 4px; justify-content: center; }
+
+    /* ── Drop zone ────────────────────────────────────── */
+    .drop-zone {
+      border: 2px dashed var(--border-default);
+      border-radius: var(--radius-lg);
+      padding: 28px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+      background: transparent;
+      margin: 0 var(--page-px);
+    }
+    .drop-zone:hover,
+    .drop-zone.dragover {
+      border-color: var(--violet);
+      background: rgba(108,99,255,.06);
+    }
+    .drop-zone-icon { font-size: 32px; margin-bottom: 8px; }
+    .drop-zone-title {
+      font-size: 14px; font-weight: 600; color: var(--text-secondary);
+    }
+    .drop-zone-sub {
+      font-size: 12px; color: var(--text-muted); margin-top: 4px;
+    }
+    #import-file-input { display: none; }
+
+    /* ── Stats Grid ───────────────────────────────────── */
+    .stats-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px; padding: 0 var(--page-px);
+    }
+    .stat-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 12px 14px;
+    }
+    .stat-item-label {
+      font-size: 11px; color: var(--text-muted); font-weight: 500;
+    }
+    .stat-item-value {
+      font-size: 18px; font-weight: 700; color: var(--text-primary);
+      font-family: var(--font-mono);
+      margin-top: 4px;
+    }
+    .stat-item-value.green { color: var(--green); }
+    .stat-item-value.violet { color: var(--violet); }
+    .stat-item-value.cyan { color: var(--cyan); }
+    .stat-item-value.amber { color: var(--amber); }
+
+    /* ── Account card ─────────────────────────────────── */
+    .account-card {
+      margin: 0 var(--page-px);
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      display: flex; align-items: center; gap: 14px;
+    }
+    .account-avatar {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; font-weight: 700; color: #fff;
+      font-family: var(--font-display);
+      flex-shrink: 0;
+    }
+    .account-body { flex: 1; min-width: 0; }
+    .account-name {
+      font-size: 15px; font-weight: 700; color: var(--text-primary);
+    }
+    .account-email {
+      font-size: 12px; color: var(--text-muted); margin-top: 2px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .account-badge {
+      background: rgba(108,99,255,.15);
+      color: var(--violet);
+      font-size: 10px; font-weight: 700;
+      padding: 2px 7px; border-radius: 20px;
+      border: 1px solid rgba(108,99,255,.3);
+      letter-spacing: .04em;
+    }
+
+    /* ── Auto-save status ─────────────────────────────── */
+    .autosave-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      flex-shrink: 0;
+    }
+    .autosave-dot.off { background: var(--text-muted); box-shadow: none; }
+
+    /* ── Version footer ───────────────────────────────── */
+    .version-footer {
+      text-align: center;
+      padding: 24px var(--page-px) 32px;
+      font-size: 12px; color: var(--text-muted);
+    }
+    .version-footer span {
+      font-family: var(--font-mono);
+      color: var(--violet);
+    }
+
+    /* ── Danger zone ──────────────────────────────────── */
+    .danger-zone-title {
+      font-size: 11px; font-weight: 600; letter-spacing: .08em;
+      text-transform: uppercase; color: #ef4444;
+      padding: 20px var(--page-px) 8px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ╔══════════════════════════════════════════════╗
+     ║  TOP NAV                                      ║
+     ╚══════════════════════════════════════════════╝ -->
+<nav class="top-nav">
+  <div class="top-nav-left">
+    <div class="top-nav-logo">GF</div>
+    <div>
+      <div class="top-nav-company" id="nav-company-name">GameForge</div>
+      <div class="top-nav-meta" id="nav-game-date">Year 1 · Week 1</div>
+    </div>
+  </div>
+  <div class="top-nav-right">
+    <div class="top-nav-cash" id="nav-cash">$0</div>
+    <button class="top-nav-icon-btn" id="notif-btn" onclick="window.location.href='dashboard.html'" aria-label="Notifications">
+      🔔
+      <span class="notif-badge" id="notif-badge" style="display:none"></span>
+    </button>
+  </div>
+</nav>
+
+<!-- ╔══════════════════════════════════════════════╗
+     ║  MAIN CONTENT                                 ║
+     ╚══════════════════════════════════════════════╝ -->
+<main class="page-main">
+
+  <!-- Hero -->
+  <div class="settings-hero fade-in-up">
+    <div class="settings-hero-icon">⚙️</div>
+    <div class="settings-hero-text">
+      <h1>Settings</h1>
+      <p>Manage your game, save data, and account</p>
+    </div>
+  </div>
+
+  <!-- ── ACCOUNT ──────────────────────────────────── -->
+  <div class="section-label">Account</div>
+
+  <div class="account-card fade-in-up">
+    <div class="account-avatar" id="acc-avatar">?</div>
+    <div class="account-body">
+      <div class="account-name" id="acc-name">Loading…</div>
+      <div class="account-email" id="acc-email">—</div>
+    </div>
+    <div class="account-badge">Player</div>
+  </div>
+
+  <!-- ── GAME OPTIONS ──────────────────────────────── -->
+  <div class="section-label">Game Options</div>
+
+  <div class="settings-list fade-in-up">
+    <!-- Game Speed -->
+    <div class="settings-row">
+      <div class="settings-row-icon violet">⏩</div>
+      <div class="settings-row-body">
+        <div class="settings-row-title">Game Speed</div>
+        <div class="settings-row-sub">Ticks per second</div>
+      </div>
+      <div class="settings-row-right">
+        <div class="speed-picker" id="speed-picker">
+          <button class="speed-btn" data-speed="0" onclick="setGameSpeed(0)">⏸</button>
+          <button class="speed-btn" data-speed="1" onclick="setGameSpeed(1)">1x</button>
+          <button class="speed-btn" data-speed="2" onclick="setGameSpeed(2)">2x</button>
+          <button class="speed-btn" data-speed="4" onclick="setGameSpeed(4)">4x</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auto-save -->
+    <div class="settings-row">
+      <div class="settings-row-icon green">💾</div>
+      <div class="settings-row-body">
+        <div class="settings-row-title">Auto-Save</div>
+        <div class="settings-row-sub" id="autosave-sub">Every 60 seconds — last saved: —</div>
+      </div>
+      <div class="settings-row-right">
+        <div class="autosave-dot" id="autosave-dot"></div>
+      </div>
+    </div>
+
+    <!-- Notifications -->
+    <div class="settings-row clickable" onclick="toggleNotifSounds()">
+      <div class="settings-row-icon amber">🔔</div>
+      <div class="settings-row-body">
+        <div class="settings-row-title">Notification Sounds</div>
+        <div class="settings-row-sub" id="notif-sound-sub">Tap to toggle</div>
+      </div>
+      <div class="settings-row-right">
+        <div class="badge" id="notif-sound-badge">On</div>
+      </div>
+    </div>
+
+    <!-- Quick Save -->
+    <div class="settings-row clickable" onclick="quickSave()">
+      <div class="settings-row-icon cyan">⚡</div>
+      <div class="settings-row-body">
+        <div class="settings-row-title">Quick Save Now</div>
+        <div class="settings-row-sub">Save to autosave slot immediately</div>
+      </div>
+      <div class="settings-row-right">
+        <span style="color:var(--text-muted); font-size:18px;">›</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SAVE SLOTS ─────────────────────────────────── -->
+  <div class="section-label">Save Slots</div>
+  <div class="save-slots fade-in-up" id="save-slots-container">
+    <!-- Rendered by JS -->
+    <div class="save-slot-card">
+      <div class="save-slot-icon">⏳</div>
+      <div class="save-slot-body">
+        <div class="save-slot-name">Loading slots…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── EXPORT / IMPORT ───────────────────────────── -->
+  <div class="section-label">Export &amp; Import</div>
+
+  <div class="export-import-section fade-in-up">
+    <div class="ei-card">
+      <div class="ei-card-icon">📤</div>
+      <div class="ei-card-title">Export Save</div>
+      <div class="ei-card-sub">Download a .gameforge backup file</div>
+      <button class="btn btn-sm btn-outline" onclick="doExport()">Export</button>
+    </div>
+    <div class="ei-card">
+      <div class="ei-card-icon">📋</div>
+      <div class="ei-card-title">Copy to Clipboard</div>
+      <div class="ei-card-sub">Copy save data as JSON string</div>
+      <button class="btn btn-sm btn-outline" onclick="doCopy()">Copy</button>
+    </div>
+  </div>
+
+  <div style="padding: 10px var(--page-px) 0;">
+    <div class="drop-zone" id="drop-zone"
+         onclick="document.getElementById('import-file-input').click()"
+         ondragover="handleDragOver(event)"
+         ondragleave="handleDragLeave(event)"
+         ondrop="handleDrop(event)">
+      <div class="drop-zone-icon">📂</div>
+      <div class="drop-zone-title">Import Save File</div>
+      <div class="drop-zone-sub">Drop a .gameforge file here, or tap to browse</div>
+    </div>
+    <input type="file" id="import-file-input" accept=".gameforge,.json" onchange="handleFileInput(event)" />
+  </div>
+
+  <!-- ── LIFETIME STATISTICS ───────────────────────── -->
+  <div class="section-label">Lifetime Statistics</div>
+
+  <div class="stats-grid fade-in-up" id="stats-grid">
+    <div class="stat-item">
+      <div class="stat-item-label">Games Released</div>
+      <div class="stat-item-value violet" id="stat-games">—</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-item-label">Total Sales</div>
+      <div class="stat-item-value green" id="stat-sales">—</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-item-label">Best Review Score</div>
+      <div class="stat-item-value amber" id="stat-score">—</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-item-label">Awards Won</div>
+      <div class="stat-item-value cyan" id="stat-awards">—</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-item-label">Staff Hired</div>
+      <div class="stat-item-value" id="stat-hired">—</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-item-label">Peak Cash</div>
+      <div class="stat-item-value green" id="stat-peak">—</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-item-label">Marketing Spent</div>
+      <div class="stat-item-value amber" id="stat-mkt">—</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-item-label">Loans Taken</div>
+      <div class="stat-item-value" id="stat-loans">—</div>
+    </div>
+  </div>
+
+  <!-- ── ABOUT ──────────────────────────────────────── -->
+  <div class="section-label">About</div>
+
+  <div class="settings-list fade-in-up">
+    <div class="settings-row">
+      <div class="settings-row-icon violet">🎮</div>
+      <div class="settings-row-body">
+        <div class="settings-row-title">GameForge Studio Sim</div>
+        <div class="settings-row-sub">Version <span id="game-version">1.0.0</span></div>
+      </div>
+    </div>
+    <div class="settings-row clickable" onclick="resetTutorial()">
+      <div class="settings-row-icon blue">📖</div>
+      <div class="settings-row-body">
+        <div class="settings-row-title">Reset Tutorial Hints</div>
+        <div class="settings-row-sub">Show all help prompts again</div>
+      </div>
+      <div class="settings-row-right">
+        <span style="color:var(--text-muted); font-size:18px;">›</span>
+      </div>
+    </div>
+    <div class="settings-row clickable" onclick="clearNotifications()">
+      <div class="settings-row-icon pink">🗑️</div>
+      <div class="settings-row-body">
+        <div class="settings-row-title">Clear Notification Log</div>
+        <div class="settings-row-sub">Remove all stored notifications</div>
+      </div>
+      <div class="settings-row-right">
+        <span class="badge badge-muted" id="notif-count-badge">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DANGER ZONE ────────────────────────────────── -->
+  <div class="danger-zone-title">Danger Zone</div>
+
+  <div class="settings-list fade-in-up" style="margin-bottom: 8px;">
+    <div class="settings-row clickable danger" onclick="confirmDeleteSave()">
+      <div class="settings-row-icon red">🗑️</div>
+      <div class="settings-row-body">
+        <div class="settings-row-title">Delete All Saves</div>
+        <div class="settings-row-sub">Permanently remove all cloud saves</div>
+      </div>
+      <div class="settings-row-right">
+        <span style="color:#ef4444; font-size:18px;">›</span>
+      </div>
+    </div>
+    <div class="settings-row clickable danger" onclick="confirmLogout()">
+      <div class="settings-row-icon red">🚪</div>
+      <div class="settings-row-body">
+        <div class="settings-row-title">Log Out</div>
+        <div class="settings-row-sub" id="logout-sub">Signed in as —</div>
+      </div>
+      <div class="settings-row-right">
+        <span style="color:#ef4444; font-size:18px;">›</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Version footer -->
+  <div class="version-footer">
+    GameForge Studio Simulator · <span>v1.0.0</span><br>
+    Built with ❤️ for indie devs everywhere
+  </div>
+
+</main>
+
+<!-- ╔══════════════════════════════════════════════╗
+     ║  BOTTOM NAV                                   ║
+     ╚══════════════════════════════════════════════╝ -->
+<nav class="bottom-nav">
+  <a class="nav-item" href="dashboard.html">
+    <span class="nav-item-icon">🏠</span>
+    <span class="nav-item-label">HQ</span>
+  </a>
+  <a class="nav-item" href="development.html">
+    <span class="nav-item-icon">💻</span>
+    <span class="nav-item-label">Dev</span>
+  </a>
+  <a class="nav-item" href="team.html">
+    <span class="nav-item-icon">👥</span>
+    <span class="nav-item-label">Team</span>
+  </a>
+  <a class="nav-item" href="market.html">
+    <span class="nav-item-icon">📊</span>
+    <span class="nav-item-label">Market</span>
+  </a>
+  <a class="nav-item active" href="settings.html">
+    <span class="nav-item-icon">⚙️</span>
+    <span class="nav-item-label">Settings</span>
+  </a>
+</nav>
+
+<!-- ╔══════════════════════════════════════════════╗
+     ║  MODALS                                       ║
+     ╚══════════════════════════════════════════════╝ -->
+
+<!-- Confirm Dialog (shared) -->
+<div class="modal-overlay" id="confirm-modal" style="display:none;">
+  <div class="modal modal-sm scale-in">
+    <div class="modal-header">
+      <h3 class="modal-title" id="confirm-title">Confirm</h3>
+    </div>
+    <div class="modal-body">
+      <p id="confirm-msg" style="color:var(--text-secondary); font-size:14px; line-height:1.6;"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="GF.ui.closeModal('confirm-modal')">Cancel</button>
+      <button class="btn btn-danger" id="confirm-ok-btn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import Result Modal -->
+<div class="modal-overlay" id="import-result-modal" style="display:none;">
+  <div class="modal modal-sm scale-in">
+    <div class="modal-header">
+      <h3 class="modal-title" id="import-result-title">Import</h3>
+      <button class="modal-close" onclick="GF.ui.closeModal('import-result-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="import-result-msg" style="color:var(--text-secondary); font-size:14px; line-height:1.6;"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="GF.ui.closeModal('import-result-modal')">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════════╗
+     ║  FIREBASE + SCRIPTS                           ║
+     ╚══════════════════════════════════════════════╝ -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<script src="js/firebase-config.js"></script>
+<script>window.GF = window.GF || {};</script>
+<script src="js/state.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/db.js"></script>
+<script src="js/notifications.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/export-import.js"></script>
+<script src="js/companies.js"></script>
+<script src="js/team.js"></script>
+<script src="js/market.js"></script>
+<script src="js/development.js"></script>
+<script src="js/finances.js"></script>
+<script src="js/research.js"></script>
+<script src="js/publishing.js"></script>
+<script src="js/awards.js"></script>
+
+<script>
+'use strict';
+
+/* ── Page State ──────────────────────────────────────── */
+let _slotMeta  = null;
+let _notifSoundOn = true;
+
+/* ── Boot ──────────────────────────────────────────── */
+(async () => {
+  const user = await GF.auth.requireAuth('index.html');
+
+  GF.notifications.init();
+  GF.ui.init();
+
+  // Load save
+  try {
+    await GF.db.load('autosave');
+  } catch (e) {
+    console.warn('[Settings] No autosave:', e.message);
+  }
+
+  // Fill account UI
+  const displayName = user.displayName || 'Player';
+  const email       = user.email || '';
+  document.getElementById('acc-avatar').textContent = displayName.charAt(0).toUpperCase();
+  document.getElementById('acc-name').textContent   = displayName;
+  document.getElementById('acc-email').textContent  = email;
+  document.getElementById('logout-sub').textContent = `Signed in as ${email}`;
+
+  // Fill nav
+  GF.ui.refreshTime();
+  GF.ui.refreshCash();
+  GF.ui.refreshNotifBadge();
+
+  // Fill stats
+  fillStats();
+
+  // Speed UI
+  if (GF.state.isLoaded()) {
+    const speed = GF.state.get().time.speed || 1;
+    updateSpeedUI(speed);
+  }
+
+  // Auto-save indicator
+  refreshAutosaveUI();
+
+  // Load slot meta
+  await loadSlotMeta();
+
+  // Notif count badge
+  if (GF.state.isLoaded()) {
+    const count = GF.state.get().notifications.length;
+    document.getElementById('notif-count-badge').textContent = count;
+  }
+
+  // Notif sound pref from localStorage
+  const soundPref = localStorage.getItem('gf_notif_sound');
+  _notifSoundOn   = soundPref !== 'off';
+  updateNotifSoundUI();
+
+  // Game version
+  if (GF.state.isLoaded()) {
+    const v = GF.state.get().version || '1.0.0';
+    document.getElementById('game-version').textContent = v;
+  }
+
+  // Start engine (paused initially — settings page doesn't need ticks)
+  GF.engine.start();
+  GF.db.startAutoSave(60000);
+
+  // Refresh autosave label every 10s
+  setInterval(refreshAutosaveUI, 10000);
+})();
+
+/* ── Stats ─────────────────────────────────────────── */
+function fillStats() {
+  if (!GF.state.isLoaded()) return;
+  const st = GF.state.get().statistics;
+  const fmt = GF.ui.formatNum;
+  const fmc = GF.ui.formatCash;
+
+  document.getElementById('stat-games').textContent  = fmt(st.gamesReleased  || 0);
+  document.getElementById('stat-sales').textContent  = fmt(st.totalSales      || 0);
+  document.getElementById('stat-score').textContent  = (st.highestReviewScore || 0) + '%';
+  document.getElementById('stat-awards').textContent = fmt(st.totalAwardsWon  || 0);
+  document.getElementById('stat-hired').textContent  = fmt(st.totalStaffHired || 0);
+  document.getElementById('stat-peak').textContent   = fmc(st.peakCash        || 0);
+  document.getElementById('stat-mkt').textContent    = fmc(st.totalMarketingSpent || 0);
+  document.getElementById('stat-loans').textContent  = fmt(st.totalLoans       || 0);
+}
+
+/* ── Speed ─────────────────────────────────────────── */
+function setGameSpeed(speed) {
+  GF.engine.setSpeed(speed);
+  updateSpeedUI(speed);
+  const labels = { 0: 'Paused', 1: '1× speed', 2: '2× speed', 4: '4× speed' };
+  GF.notifications.push('info', 'Speed Changed', labels[speed] || '—', false);
+}
+
+function updateSpeedUI(speed) {
+  document.querySelectorAll('.speed-btn').forEach(btn => {
+    btn.classList.toggle('active', Number(btn.dataset.speed) === Number(speed));
+  });
+}
+
+/* ── Auto-save UI ──────────────────────────────────── */
+function refreshAutosaveUI() {
+  const dot = document.getElementById('autosave-dot');
+  const sub = document.getElementById('autosave-sub');
+  const on  = !!GF.db._autoSaveTimer;
+
+  dot.classList.toggle('off', !on);
+
+  let lastStr = '—';
+  if (GF.db._lastSaved) {
+    const diffMs  = Date.now() - GF.db._lastSaved.getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin < 1)      lastStr = 'just now';
+    else if (diffMin < 60) lastStr = `${diffMin}m ago`;
+    else                  lastStr = GF.db._lastSaved.toLocaleTimeString();
+  }
+  sub.textContent = `Every 60s · Last saved: ${lastStr}`;
+}
+
+/* ── Quick Save ────────────────────────────────────── */
+async function quickSave() {
+  try {
+    await GF.db.save('autosave');
+    refreshAutosaveUI();
+    GF.notifications.push('success', 'Saved!', 'Progress saved to autosave slot.', false);
+  } catch (e) {
+    GF.notifications.push('danger', 'Save Failed', e.message, false);
+  }
+}
+
+/* ── Save Slots ────────────────────────────────────── */
+async function loadSlotMeta() {
+  try {
+    _slotMeta = await GF.db.getAllSlotMeta();
+    renderSlots();
+  } catch (e) {
+    console.warn('[Settings] Could not load slot meta:', e.message);
+    renderSlots();
+  }
+}
+
+function renderSlots() {
+  const container = document.getElementById('save-slots-container');
+  container.innerHTML = '';
+
+  const slots = [
+    { key: 'slot1', label: 'Save Slot 1', n: 1 },
+    { key: 'slot2', label: 'Save Slot 2', n: 2 },
+    { key: 'slot3', label: 'Save Slot 3', n: 3 }
+  ];
+
+  slots.forEach(slot => {
+    const meta = _slotMeta?.[slot.key];
+    const card = document.createElement('div');
+    card.className = 'save-slot-card' + (meta ? '' : ' save-slot-empty');
+
+    const metaLine = meta
+      ? `${meta.companyName} · Y${meta.year}W${meta.week} · ${GF.ui.formatCash(meta.cash)} · Rep ${Math.round(meta.reputation)}
+         · Saved ${meta.savedAt ? _timeAgo(meta.savedAt) : '—'}`
+      : 'Empty slot';
+
+    card.innerHTML = `
+      <div class="save-slot-icon">${meta ? '💾' : '📂'}</div>
+      <div class="save-slot-body">
+        <div class="save-slot-name">${slot.label}</div>
+        <div class="save-slot-meta">${metaLine}</div>
+      </div>
+      <div class="save-slot-actions">
+        <button class="save-slot-btn" onclick="saveToSlot(${slot.n})">Save</button>
+        ${meta ? `<button class="save-slot-btn" onclick="loadFromSlot(${slot.n})">Load</button>
+                  <button class="save-slot-btn danger" onclick="deleteSlot(${slot.n})">✕</button>` : ''}
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+async function saveToSlot(n) {
+  try {
+    await GF.db.saveSlot(n);
+    await loadSlotMeta();
+  } catch (e) {
+    GF.notifications.push('danger', 'Save Failed', e.message, false);
+  }
+}
+
+async function loadFromSlot(n) {
+  showConfirm(
+    'Load Slot ' + n,
+    'This will replace your current unsaved progress. Are you sure?',
+    async () => {
+      try {
+        await GF.db.loadSlot(n);
+        GF.notifications.push('success', 'Loaded!', `Loaded from Slot ${n}.`, false);
+        fillStats();
+        GF.ui.refreshTime();
+        GF.ui.refreshCash();
+      } catch (e) {
+        GF.notifications.push('danger', 'Load Failed', e.message, false);
+      }
+    },
+    false
+  );
+}
+
+async function deleteSlot(n) {
+  showConfirm(
+    'Delete Slot ' + n,
+    'This will permanently delete Save Slot ' + n + '. This cannot be undone.',
+    async () => {
+      try {
+        await GF.db.deleteSave('slot' + n);
+        GF.notifications.push('info', 'Slot Deleted', `Save Slot ${n} has been removed.`, false);
+        await loadSlotMeta();
+      } catch (e) {
+        GF.notifications.push('danger', 'Delete Failed', e.message, false);
+      }
+    },
+    true
+  );
+}
+
+/* ── Export / Import ───────────────────────────────── */
+function doExport() {
+  try {
+    GF.saveIO.exportToFile();
+    GF.notifications.push('success', 'Exported!', 'Save file downloaded.', false);
+  } catch (e) {
+    GF.notifications.push('danger', 'Export Failed', e.message, false);
+  }
+}
+
+function doCopy() {
+  GF.saveIO.copyToClipboard().then(ok => {
+    if (ok) GF.notifications.push('success', 'Copied!', 'Save data copied to clipboard.', false);
+    else    GF.notifications.push('warning', 'Copy Failed', 'Clipboard access denied.', false);
+  });
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.add('dragover');
+}
+
+function handleDragLeave() {
+  document.getElementById('drop-zone').classList.remove('dragover');
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) processImportFile(file);
+}
+
+function handleFileInput(e) {
+  const file = e.target.files[0];
+  if (file) processImportFile(file);
+  e.target.value = '';
+}
+
+async function processImportFile(file) {
+  try {
+    const result = await GF.saveIO.importFromFile(file);
+    if (result.success) {
+      document.getElementById('import-result-title').textContent = '✅ Import Successful';
+      document.getElementById('import-result-msg').innerHTML =
+        `Save imported for <strong>${result.companyName}</strong>.<br>
+         Year ${result.year}, Week ${result.week}.<br><br>
+         Your cloud autosave has been updated.`;
+      GF.ui.showModal('import-result-modal');
+      fillStats();
+      GF.ui.refreshTime();
+      GF.ui.refreshCash();
+      await loadSlotMeta();
+    } else {
+      document.getElementById('import-result-title').textContent = '❌ Import Failed';
+      document.getElementById('import-result-msg').textContent   = result.error || 'Invalid save file.';
+      GF.ui.showModal('import-result-modal');
+    }
+  } catch (e) {
+    document.getElementById('import-result-title').textContent = '❌ Import Error';
+    document.getElementById('import-result-msg').textContent   = e.message;
+    GF.ui.showModal('import-result-modal');
+  }
+}
+
+/* ── Notif Sounds ──────────────────────────────────── */
+function toggleNotifSounds() {
+  _notifSoundOn = !_notifSoundOn;
+  localStorage.setItem('gf_notif_sound', _notifSoundOn ? 'on' : 'off');
+  updateNotifSoundUI();
+  GF.notifications.push('info', 'Notification Sounds',
+    _notifSoundOn ? 'Sounds enabled.' : 'Sounds disabled.', false);
+}
+
+function updateNotifSoundUI() {
+  const badge = document.getElementById('notif-sound-badge');
+  const sub   = document.getElementById('notif-sound-sub');
+  badge.textContent = _notifSoundOn ? 'On' : 'Off';
+  badge.className   = 'badge ' + (_notifSoundOn ? 'badge-success' : 'badge-muted');
+  sub.textContent   = _notifSoundOn ? 'Toast sounds enabled' : 'Toast sounds disabled';
+}
+
+/* ── Clear Notifications ───────────────────────────── */
+function clearNotifications() {
+  GF.notifications.clearAll();
+  document.getElementById('notif-count-badge').textContent = '0';
+  GF.ui.refreshNotifBadge();
+  GF.notifications.push('info', 'Cleared', 'Notification log cleared.', false);
+}
+
+/* ── Reset Tutorial ────────────────────────────────── */
+function resetTutorial() {
+  localStorage.removeItem('gf_tutorial_done');
+  GF.notifications.push('info', 'Tutorial Reset', 'Tutorial hints will show again.', false);
+}
+
+/* ── Delete All Saves ──────────────────────────────── */
+function confirmDeleteSave() {
+  showConfirm(
+    '⚠️ Delete All Saves',
+    'This will permanently delete ALL your cloud saves including all manual slots and the autosave. This action CANNOT be undone.',
+    async () => {
+      try {
+        const uid = GF.auth.uid();
+        for (const slot of ['autosave', 'slot1', 'slot2', 'slot3']) {
+          try { await GF.db.deleteSave(slot); } catch (_) {}
+        }
+        GF.notifications.push('danger', 'All Saves Deleted', 'Your cloud data has been removed.', false);
+        await loadSlotMeta();
+      } catch (e) {
+        GF.notifications.push('danger', 'Delete Failed', e.message, false);
+      }
+    },
+    true
+  );
+}
+
+/* ── Logout ────────────────────────────────────────── */
+function confirmLogout() {
+  showConfirm(
+    'Log Out',
+    'Are you sure you want to log out? Your progress will be auto-saved first.',
+    async () => {
+      await quickSave();
+      await GF.auth.logout();
+    },
+    false
+  );
+}
+
+/* ── Confirm Helper ────────────────────────────────── */
+function showConfirm(title, msg, onOk, danger = false) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').textContent   = msg;
+  const btn = document.getElementById('confirm-ok-btn');
+  btn.className = danger ? 'btn btn-danger' : 'btn btn-primary';
+  btn.textContent = danger ? 'Delete' : 'Confirm';
+  btn.onclick = () => {
+    GF.ui.closeModal('confirm-modal');
+    onOk();
+  };
+  GF.ui.showModal('confirm-modal');
+}
+
+/* ── Time Ago Helper ───────────────────────────────── */
+function _timeAgo(date) {
+  if (!date) return '—';
+  const d   = date instanceof Date ? date : new Date(date);
+  const sec = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (sec < 60)   return 'just now';
+  if (sec < 3600) return Math.floor(sec / 60) + 'm ago';
+  if (sec < 86400)return Math.floor(sec / 3600) + 'h ago';
+  return Math.floor(sec / 86400) + 'd ago';
+}
+</script>
+</body>
+</html>

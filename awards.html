@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="theme-color" content="#050508">
+  <title>Awards | GameForge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    .award-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 18px;
+      margin-bottom: 12px;
+      transition: all var(--t-base);
+      position: relative;
+      overflow: hidden;
+    }
+    .award-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--gold), #ff9500);
+    }
+    .award-card:hover { border-color: var(--gold); box-shadow: 0 0 20px rgba(255,215,0,0.1); }
+
+    .nom-card {
+      background: var(--bg-3);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 12px;
+      margin-bottom: 8px;
+    }
+
+    .ceremony-card {
+      background: var(--bg-3);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .ceremony-card.winner { border-color: var(--gold); background: var(--gold-dim); }
+
+    .big-trophy {
+      font-size: 4rem;
+      text-align: center;
+      display: block;
+      animation: pulseSlow 3s ease infinite;
+    }
+
+    .category-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .category-item:last-child { border-bottom: none; }
+  </style>
+</head>
+<body>
+  <div id="page-loader" class="full-page-loader">
+    <div style="font-size:2rem">🏆</div>
+    <div class="spinner spinner-lg"></div>
+  </div>
+
+  <nav class="top-nav">
+    <a href="dashboard.html" class="nav-logo" style="color:inherit;text-decoration:none">
+      <div class="nav-logo-icon">🎮</div>
+      <span id="nav-company-name">GameForge</span>
+    </a>
+    <div class="time-display" style="margin:0 auto">
+      <button class="speed-btn" data-speed="0">⏸</button>
+      <button class="speed-btn active" data-speed="1">▶</button>
+      <button class="speed-btn" data-speed="2">⏩</button>
+      <button class="speed-btn" data-speed="4">⏭</button>
+      <span id="nav-time">Jan Y2005 W1</span>
+    </div>
+    <div class="cash-display">💰 <span id="nav-cash">$0</span></div>
+  </nav>
+  <div class="top-nav-spacer"></div>
+
+  <main class="app-content">
+    <!-- Stats banner -->
+    <div class="card card-glow" style="margin-bottom:16px;text-align:center;padding:24px">
+      <span class="big-trophy">🏆</span>
+      <div style="font-family:var(--font-display);font-size:2.5rem;font-weight:700;color:var(--gold);margin:8px 0" id="total-wins">0</div>
+      <div style="color:var(--text-3);font-size:0.875rem">Total Awards Won</div>
+      <div style="display:flex;gap:16px;justify-content:center;margin-top:16px;flex-wrap:wrap">
+        <div style="text-align:center">
+          <div style="font-family:var(--font-mono);font-weight:700;color:var(--violet-light)" id="total-noms">0</div>
+          <div style="font-size:0.75rem;color:var(--text-3)">Nominations</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-family:var(--font-mono);font-weight:700;color:var(--cyan)" id="next-ceremony">—</div>
+          <div style="font-size:0.75rem;color:var(--text-3)">Weeks to Next Ceremony</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-family:var(--font-mono);font-weight:700;color:var(--success)" id="rep-boost">+0</div>
+          <div style="font-size:0.75rem;color:var(--text-3)">Reputation from Awards</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs" style="margin-bottom:16px">
+      <button class="tab-btn active" onclick="switchTab('nominations',this)">Nominations</button>
+      <button class="tab-btn" onclick="switchTab('won',this)">Won Awards</button>
+      <button class="tab-btn" onclick="switchTab('history',this)">Ceremonies</button>
+      <button class="tab-btn" onclick="switchTab('categories',this)">Categories</button>
+    </div>
+
+    <!-- Nominations -->
+    <div id="tab-nominations">
+      <div style="color:var(--text-3);font-size:0.875rem;margin-bottom:12px">Active nominations for the upcoming ceremony (end of year).</div>
+      <div id="nominations-list"></div>
+    </div>
+
+    <!-- Won -->
+    <div id="tab-won" style="display:none">
+      <div id="won-list"></div>
+    </div>
+
+    <!-- History -->
+    <div id="tab-history" style="display:none">
+      <div id="history-list"></div>
+    </div>
+
+    <!-- Categories -->
+    <div id="tab-categories" style="display:none">
+      <div id="categories-list"></div>
+    </div>
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="dashboard.html"   class="nav-item"><span class="nav-item-icon">🏠</span>HQ</a>
+    <a href="development.html" class="nav-item"><span class="nav-item-icon">🔨</span>Dev</a>
+    <a href="team.html"        class="nav-item"><span class="nav-item-icon">👥</span>Team</a>
+    <a href="market.html"      class="nav-item"><span class="nav-item-icon">📈</span>Market</a>
+    <a href="finances.html"    class="nav-item"><span class="nav-item-icon">💰</span>Finance</a>
+    <a href="settings.html"    class="nav-item active"><span class="nav-item-icon">⚙️</span>More<span class="nav-badge" id="notif-badge" style="display:none">0</span></a>
+  </nav>
+
+  <div id="toast-container"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/companies.js"></script>
+  <script src="js/market.js"></script>
+  <script src="js/research.js"></script>
+  <script src="js/team.js"></script>
+  <script src="js/finances.js"></script>
+  <script src="js/development.js"></script>
+  <script src="js/publishing.js"></script>
+  <script src="js/awards.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/export-import.js"></script>
+  <script src="js/ui.js"></script>
+
+  <script>
+    let activeTab = 'nominations';
+
+    (async () => {
+      await GF.auth.requireAuth();
+      try { await GF.db.load('autosave'); } catch(e) { window.location.href='setup.html'; return; }
+      GF.companies.init();
+      GF.team.refreshApplicants();
+      GF.notifications.init();
+      GF.ui.init();
+      GF.engine.start();
+      GF.db.startAutoSave(60000);
+      renderAll();
+      GF.ui.hideLoader();
+      setInterval(renderAll, 4000);
+    })();
+
+    function switchTab(tab, el) {
+      activeTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      ['nominations','won','history','categories'].forEach(t =>
+        document.getElementById(`tab-${t}`).style.display = t === tab ? '' : 'none'
+      );
+      renderAll();
+    }
+
+    function renderAll() {
+      if (!GF.state.isLoaded()) return;
+      const s = GF.state.get();
+      document.getElementById('nav-company-name').textContent = s.company.name;
+
+      const ceremony = GF.awards.getNextCeremony();
+      document.getElementById('total-wins').textContent  = s.statistics.totalAwardsWon;
+      document.getElementById('total-noms').textContent  = s.awards.nominations.length;
+      document.getElementById('next-ceremony').textContent = ceremony.weeksLeft + ' weeks';
+      const repFromAwards = s.awards.won.reduce((a, w) => {
+        const cat = GF.AWARD_CATEGORIES.find(c => c.id === w.categoryId);
+        return a + (cat?.repBonus || 0);
+      }, 0);
+      document.getElementById('rep-boost').textContent = '+' + repFromAwards;
+
+      if (activeTab === 'nominations') renderNominations(s);
+      else if (activeTab === 'won')    renderWon(s);
+      else if (activeTab === 'history') renderHistory(s);
+      else if (activeTab === 'categories') renderCategories(s);
+    }
+
+    function renderNominations(s) {
+      const list = document.getElementById('nominations-list');
+      const current = s.awards.nominations.filter(n => n.year === s.time.year);
+      if (!current.length) {
+        list.innerHTML = `<div class="empty-state">
+          <div class="empty-state-icon">🎯</div>
+          <div class="empty-state-title">No Current Nominations</div>
+          <div class="empty-state-text">Release games with a review score of 75+ to get nominated. The annual ceremony is at the end of each year.</div>
+        </div>`;
+        return;
+      }
+      list.innerHTML = current.map(n => {
+        const cat = GF.AWARD_CATEGORIES.find(c => c.id === n.categoryId);
+        const winChance = Math.min(85, Math.round((n.score - (cat?.minScore||75)) / 20 * 70 + 10));
+        return `
+          <div class="nom-card">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:1.75rem">${cat?.icon || '🏆'}</span>
+              <div style="flex:1">
+                <div style="font-family:var(--font-display);font-weight:600;font-size:0.9375rem">${cat?.label || n.categoryId}</div>
+                <div style="font-size:0.8125rem;color:var(--text-3)">for "${n.gameTitle}"</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-family:var(--font-mono);font-weight:700;color:${GF.ui.scoreColor(n.score)}">${n.score}/100</div>
+                <div style="font-size:0.7rem;color:var(--text-3)">~${winChance}% win chance</div>
+              </div>
+            </div>
+            <div class="progress-bar-wrap sm" style="margin-top:8px">
+              <div class="progress-bar-fill gold" style="width:${winChance}%;background:linear-gradient(90deg,var(--gold),#ff9500)"></div>
+            </div>
+            ${cat ? `<div style="font-size:0.75rem;color:var(--text-3);margin-top:4px">Win bonus: +${cat.repBonus} rep · +${Math.round(cat.salesBoost*100)}% sales boost</div>` : ''}
+          </div>`;
+      }).join('');
+    }
+
+    function renderWon(s) {
+      const list = document.getElementById('won-list');
+      if (!s.awards.won.length) {
+        list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🏆</div><div class="empty-state-title">No Awards Yet</div><div class="empty-state-text">Compete at the annual ceremony by releasing high-quality games.</div></div>`;
+        return;
+      }
+      list.innerHTML = [...s.awards.won].reverse().map(w => `
+        <div class="award-card">
+          <div style="display:flex;align-items:center;gap:14px">
+            <span style="font-size:2.5rem">${w.icon}</span>
+            <div style="flex:1">
+              <div style="font-family:var(--font-display);font-weight:700;font-size:1rem;color:var(--gold)">${w.categoryLabel}</div>
+              <div style="font-size:0.875rem;color:var(--text-2);margin-top:2px">"${w.gameTitle}"</div>
+              <div style="font-size:0.75rem;color:var(--text-3);margin-top:4px">Year ${w.year} Ceremony · Score: ${w.score}/100</div>
+            </div>
+            <div class="badge badge-gold">Y${w.year}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderHistory(s) {
+      const list = document.getElementById('history-list');
+      if (!s.awards.history.length) {
+        list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📜</div><div class="empty-state-title">No Past Ceremonies</div><div class="empty-state-text">The first annual ceremony will happen at the end of the current year.</div></div>`;
+        return;
+      }
+      list.innerHTML = [...s.awards.history].reverse().map(h => `
+        <div class="ceremony-card ${h.wins > 0 ? 'winner' : ''}">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <div style="font-family:var(--font-display);font-weight:700;font-size:1rem">${h.year} GameForge Awards</div>
+            <span class="badge ${h.wins>0?'badge-gold':'badge-muted'}">${h.wins > 0 ? h.wins + ' wins 🏆' : 'No wins'}</span>
+          </div>
+          <div style="display:flex;gap:16px;font-size:0.875rem">
+            <span style="color:var(--text-3)">Nominations: <strong style="color:var(--text-1)">${h.nominations}</strong></span>
+            <span style="color:var(--text-3)">Wins: <strong style="color:var(--gold)">${h.wins}</strong></span>
+          </div>
+          ${h.winners.length ? `
+          <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px">
+            ${h.winners.map(w => `<span class="badge badge-gold">${w.icon} ${w.categoryLabel}</span>`).join('')}
+          </div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    function renderCategories(s) {
+      const list = document.getElementById('categories-list');
+      list.innerHTML = GF.AWARD_CATEGORIES.map(cat => {
+        const timesWon = s.awards.won.filter(w => w.categoryId === cat.id).length;
+        const lastWin  = [...s.awards.won].reverse().find(w => w.categoryId === cat.id);
+        return `
+          <div class="category-item">
+            <span style="font-size:2rem">${cat.icon}</span>
+            <div style="flex:1">
+              <div style="font-family:var(--font-display);font-weight:600;font-size:0.9375rem">${cat.label}</div>
+              <div style="font-size:0.75rem;color:var(--text-3);margin-top:2px">
+                Min score: ${cat.minScore} · Rep bonus: +${cat.repBonus} · Sales: +${Math.round(cat.salesBoost*100)}%
+              </div>
+              ${lastWin ? `<div style="font-size:0.75rem;color:var(--gold);margin-top:2px">Last won: Y${lastWin.year} with "${lastWin.gameTitle}"</div>` : ''}
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              ${timesWon > 0
+                ? `<div style="font-family:var(--font-mono);font-weight:700;color:var(--gold);font-size:1.25rem">${timesWon}x</div>`
+                : `<div style="color:var(--text-4);font-size:0.875rem">0x</div>`}
+              <div style="font-size:0.7rem;color:var(--text-3)">won</div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+  </script>
+</body>
+</html>

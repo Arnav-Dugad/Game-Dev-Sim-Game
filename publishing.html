@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="theme-color" content="#050508">
+  <title>Publishing | GameForge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    .platform-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 18px;
+      margin-bottom: 12px;
+      transition: all var(--t-base);
+    }
+    .platform-card.licensed { border-color: var(--success); }
+    .platform-card.exclusive { border-color: var(--gold); box-shadow: 0 0 16px rgba(255,215,0,0.1); }
+    .platform-logo {
+      width: 48px; height: 48px;
+      border-radius: var(--r-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+    .publisher-offer {
+      background: var(--bg-3);
+      border: 2px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 16px;
+      margin-bottom: 12px;
+      transition: all var(--t-base);
+    }
+    .publisher-offer:hover { border-color: var(--violet); }
+  </style>
+</head>
+<body>
+  <div id="page-loader" class="full-page-loader">
+    <div style="font-size:2rem">📤</div>
+    <div class="spinner spinner-lg"></div>
+  </div>
+
+  <nav class="top-nav">
+    <a href="dashboard.html" class="nav-logo" style="color:inherit;text-decoration:none">
+      <div class="nav-logo-icon">🎮</div>
+      <span id="nav-company-name">GameForge</span>
+    </a>
+    <div class="time-display" style="margin:0 auto">
+      <button class="speed-btn" data-speed="0">⏸</button>
+      <button class="speed-btn active" data-speed="1">▶</button>
+      <button class="speed-btn" data-speed="2">⏩</button>
+      <button class="speed-btn" data-speed="4">⏭</button>
+      <span id="nav-time">Jan Y2005 W1</span>
+    </div>
+    <div class="cash-display">💰 <span id="nav-cash">$0</span></div>
+  </nav>
+  <div class="top-nav-spacer"></div>
+
+  <main class="app-content">
+    <div class="section-header" style="margin-bottom:16px">
+      <div>
+        <h2 class="section-title">📤 Publishing & Deals</h2>
+        <div class="section-subtitle">Platform licenses, publisher deals & distribution</div>
+      </div>
+    </div>
+
+    <div class="tabs" style="margin-bottom:16px">
+      <button class="tab-btn active" onclick="switchTab('platforms',this)">Platforms</button>
+      <button class="tab-btn" onclick="switchTab('publishers',this)">Publishers</button>
+      <button class="tab-btn" onclick="switchTab('distribution',this)">Distribution</button>
+    </div>
+
+    <!-- Platforms -->
+    <div id="tab-platforms">
+      <div class="card" style="margin-bottom:16px;background:var(--violet-dim);border-color:var(--violet)">
+        <div style="font-size:0.875rem;color:var(--text-2)">
+          💡 <strong>PC (Steam)</strong> is always available for free. Console platforms require licensing fees and minimum reputation. Exclusive deals give you upfront cash in exchange for platform exclusivity.
+        </div>
+      </div>
+      <div id="platform-list"></div>
+    </div>
+
+    <!-- Publishers -->
+    <div id="tab-publishers" style="display:none">
+      <div class="card" style="margin-bottom:16px;background:var(--cyan-dim);border-color:var(--cyan)">
+        <div style="font-size:0.875rem;color:var(--text-2)">
+          🤝 Publisher deals give you upfront funding for your next game, but the publisher takes a share of your revenue. Great for funding big projects without loans.
+        </div>
+      </div>
+      <div id="available-publishers"></div>
+      <div style="margin-top:20px">
+        <div class="section-title" style="margin-bottom:12px">Active Deals</div>
+        <div id="active-publishers"></div>
+      </div>
+    </div>
+
+    <!-- Distribution -->
+    <div id="tab-distribution" style="display:none">
+      <div id="distribution-list"></div>
+    </div>
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="dashboard.html"   class="nav-item"><span class="nav-item-icon">🏠</span>HQ</a>
+    <a href="development.html" class="nav-item"><span class="nav-item-icon">🔨</span>Dev</a>
+    <a href="team.html"        class="nav-item"><span class="nav-item-icon">👥</span>Team</a>
+    <a href="market.html"      class="nav-item"><span class="nav-item-icon">📈</span>Market</a>
+    <a href="finances.html"    class="nav-item"><span class="nav-item-icon">💰</span>Finance</a>
+    <a href="settings.html"    class="nav-item active"><span class="nav-item-icon">⚙️</span>More<span class="nav-badge" id="notif-badge" style="display:none">0</span></a>
+  </nav>
+
+  <div id="confirm-overlay"><div id="confirm-box">
+    <h3 id="confirm-title" style="font-family:var(--font-display);font-size:1.125rem;margin-bottom:8px"></h3>
+    <p id="confirm-message" style="color:var(--text-3);font-size:0.875rem;margin-bottom:20px"></p>
+    <div style="display:flex;gap:10px"><button id="confirm-cancel" class="btn btn-secondary flex-1">Cancel</button><button id="confirm-ok" class="btn btn-primary flex-1">Confirm</button></div>
+  </div></div>
+  <div id="toast-container"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/companies.js"></script>
+  <script src="js/market.js"></script>
+  <script src="js/research.js"></script>
+  <script src="js/team.js"></script>
+  <script src="js/finances.js"></script>
+  <script src="js/development.js"></script>
+  <script src="js/publishing.js"></script>
+  <script src="js/awards.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/export-import.js"></script>
+  <script src="js/ui.js"></script>
+
+  <script>
+    let activeTab = 'platforms';
+
+    (async () => {
+      await GF.auth.requireAuth();
+      try { await GF.db.load('autosave'); } catch(e) { window.location.href='setup.html'; return; }
+      GF.companies.init();
+      GF.team.refreshApplicants();
+      GF.notifications.init();
+      GF.ui.init();
+      GF.engine.start();
+      GF.db.startAutoSave(60000);
+      renderAll();
+      GF.ui.hideLoader();
+      setInterval(renderAll, 3000);
+    })();
+
+    function switchTab(tab, el) {
+      activeTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      ['platforms','publishers','distribution'].forEach(t =>
+        document.getElementById(`tab-${t}`).style.display = t === tab ? '' : 'none'
+      );
+      renderAll();
+    }
+
+    function renderAll() {
+      if (!GF.state.isLoaded()) return;
+      const s = GF.state.get();
+      document.getElementById('nav-company-name').textContent = s.company.name;
+      if (activeTab === 'platforms')     renderPlatforms(s);
+      else if (activeTab === 'publishers')  renderPublishers(s);
+      else if (activeTab === 'distribution') renderDistribution(s);
+    }
+
+    function renderPlatforms(s) {
+      const list = document.getElementById('platform-list');
+      list.innerHTML = Object.entries(GF.PLATFORM_DEALS).map(([id, deal]) => {
+        const licensed = GF.publishing.hasLicense(id);
+        const dealData = s.publishing.platformDeals.find(d => d.platformId === id);
+        const isExclusive = dealData?.exclusive;
+        const repOk  = s.company.reputation >= deal.minReputation;
+        const cashOk = s.finances.cash >= deal.fee;
+
+        return `
+        <div class="platform-card ${licensed ? 'licensed' : ''} ${isExclusive ? 'exclusive' : ''}">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">
+            <div class="platform-logo" style="background:var(--bg-3);border:1px solid var(--border)">${deal.icon}</div>
+            <div style="flex:1">
+              <div style="font-family:var(--font-display);font-weight:700;font-size:1rem">${deal.name}</div>
+              <div style="font-size:0.8rem;color:var(--text-3)">${deal.company} · ${Math.round(deal.cut*100)}% revenue share</div>
+            </div>
+            ${licensed
+              ? `<span class="badge ${isExclusive ? 'badge-gold' : 'badge-success'}">${isExclusive ? '🌟 Exclusive' : '✅ Licensed'}</span>`
+              : `<span class="badge badge-muted">Unlicensed</span>`}
+          </div>
+
+          ${!licensed ? `
+          <div class="info-row" style="padding:8px 0">
+            <span class="info-row-label">License Fee</span>
+            <span class="info-row-value ${cashOk ? 'text-success' : 'text-danger'}">$${GF.ui.formatNum(deal.fee)}</span>
+          </div>
+          <div class="info-row" style="padding:8px 0">
+            <span class="info-row-label">Min Reputation</span>
+            <span class="info-row-value ${repOk ? 'text-success' : 'text-danger'}">${deal.minReputation} ${repOk ? '✓' : `(need ${deal.minReputation - s.company.reputation} more)`}</span>
+          </div>` : ''}
+
+          ${licensed && !isExclusive && deal.exclusivePayout > 0 ? `
+          <div style="padding:10px;background:var(--gold-dim);border-radius:var(--r-md);border:1px solid rgba(255,215,0,0.2);margin-bottom:10px">
+            <div style="font-size:0.8125rem;color:var(--text-2);margin-bottom:6px">
+              🌟 <strong>Exclusive Deal Available</strong> — Receive $${GF.ui.formatNum(deal.exclusivePayout)} upfront for ${deal.exclusiveMonths} months of exclusivity
+            </div>
+            <button class="btn btn-gold btn-sm" onclick="doExclusive('${id}')">Sign Exclusive Deal</button>
+          </div>` : ''}
+
+          ${isExclusive && dealData.exclusiveEnds ? `
+          <div style="font-size:0.8rem;color:var(--gold);margin-bottom:10px">
+            🌟 Exclusive until Y${dealData.exclusiveEnds.year} M${dealData.exclusiveEnds.month}
+          </div>` : ''}
+
+          ${!licensed ? `
+          <button class="btn btn-primary btn-sm btn-w-full"
+                  onclick="doLicense('${id}')"
+                  ${!repOk || id === 'pc' ? 'disabled' : ''}>
+            ${id === 'pc' ? '✅ Always Available' : `Get License — $${GF.ui.formatNum(deal.fee)}`}
+          </button>` : ''}
+        </div>`;
+      }).join('');
+    }
+
+    function doLicense(platformId) {
+      GF.publishing.getLicense(platformId);
+      renderAll();
+    }
+
+    function doExclusive(platformId) {
+      const deal = GF.PLATFORM_DEALS[platformId];
+      GF.ui.confirm(
+        `Exclusive Deal: ${deal.name}`,
+        `Receive $${GF.ui.formatNum(deal.exclusivePayout)} upfront, but your games must release exclusively on ${deal.name} for ${deal.exclusiveMonths} months.`,
+        () => { GF.publishing.signExclusive(platformId); renderAll(); }
+      );
+    }
+
+    function renderPublishers(s) {
+      const available = GF.publishing.getAvailablePublisherOffers();
+      const avail  = document.getElementById('available-publishers');
+      const active = document.getElementById('active-publishers');
+
+      avail.innerHTML = available.length
+        ? available.map(o => `
+          <div class="publisher-offer">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+              <div style="font-family:var(--font-display);font-weight:700;font-size:1rem">${o.label}</div>
+              <span class="badge badge-violet">${o.company}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+              <div style="background:var(--bg-4);border-radius:var(--r-sm);padding:8px;text-align:center">
+                <div style="font-size:0.7rem;color:var(--text-3)">ADVANCE FUNDING</div>
+                <div style="font-family:var(--font-mono);font-weight:700;color:var(--success)">$${GF.ui.formatNum(o.funding)}</div>
+              </div>
+              <div style="background:var(--bg-4);border-radius:var(--r-sm);padding:8px;text-align:center">
+                <div style="font-size:0.7rem;color:var(--text-3)">REVENUE SHARE</div>
+                <div style="font-family:var(--font-mono);font-weight:700;color:var(--warning)">${Math.round(o.revShare*100)}%</div>
+              </div>
+            </div>
+            <div class="info-row" style="padding:4px 0">
+              <span class="info-row-label" style="font-size:0.8rem">Min Reputation Required</span>
+              <span class="info-row-value" style="color:${s.company.reputation>=o.minRep?'var(--success)':'var(--danger)';font-size:0.8rem}">${o.minRep}</span>
+            </div>
+            <button class="btn btn-primary btn-sm btn-w-full" style="margin-top:10px"
+                    onclick="doPublisher('${o.id}')">Sign Deal — $${GF.ui.formatNum(o.funding)}</button>
+          </div>
+        `).join('')
+        : `<div class="empty-state"><div class="empty-state-icon">🤝</div><div class="empty-state-title">No Offers Available</div><div class="empty-state-text">Build your reputation to attract publisher interest.</div></div>`;
+
+      active.innerHTML = s.publishing.publisherDeals.length
+        ? s.publishing.publisherDeals.map(d => `
+          <div class="card" style="margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div style="font-weight:600">${d.label}</div>
+                <div style="font-size:0.8rem;color:var(--text-3)">Signed Y${d.signedAt.year} · ${Math.round(d.revShare*100)}% rev share</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-family:var(--font-mono);color:var(--success);font-weight:600">+$${GF.ui.formatNum(d.funding)}</div>
+                <span class="badge badge-success">Active</span>
+              </div>
+            </div>
+          </div>
+        `).join('')
+        : '<div style="color:var(--text-3);font-size:0.875rem">No active publisher deals</div>';
+    }
+
+    function doPublisher(offerId) {
+      const offer = GF.PUBLISHER_OFFERS.find(o => o.id === offerId);
+      GF.ui.confirm(
+        `Publisher Deal: ${offer.label}`,
+        `${offer.company} will fund $${GF.ui.formatNum(offer.funding)} for your next game. They take ${Math.round(offer.revShare*100)}% of all revenue.`,
+        () => { GF.publishing.signPublisherDeal(offerId); renderAll(); }
+      );
+    }
+
+    function renderDistribution(s) {
+      const list = document.getElementById('distribution-list');
+      const options = GF.publishing.getDistributionOptions();
+      list.innerHTML = options.map(d => `
+        <div class="card card-hover" style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div style="font-family:var(--font-display);font-weight:700;font-size:1.0625rem">${d.name}</div>
+            <span class="badge ${d.cut <= 0.15 ? 'badge-success' : 'badge-muted'}">${Math.round(d.cut*100)}% cut</span>
+          </div>
+          <div style="font-size:0.875rem;color:var(--text-3);margin-bottom:10px">✨ ${d.bonus}</div>
+          <div class="info-row"><span class="info-row-label">Platform Cut</span><span class="info-row-value text-warning">${Math.round(d.cut*100)}%</span></div>
+          <div class="info-row"><span class="info-row-label">Your Share</span><span class="info-row-value text-success">${Math.round((1-d.cut)*100)}%</span></div>
+          <div class="info-row"><span class="info-row-label">Min Reputation</span><span class="info-row-value ${s.company.reputation>=d.minRep?'text-success':'text-danger'}">${d.minRep || 'None'}</span></div>
+        </div>
+      `).join('');
+    }
+  </script>
+</body>
+</html>
